@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory; // Add this line
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -27,9 +28,9 @@ class PlotController extends Controller
             ->get();
 
         // Filter params
-        $statusFilter   = request('status', '');
+        $statusFilter = request('status', '');
         $categoryFilter = request('category', '');
-        $searchQuery    = request('search', '');
+        $searchQuery = request('search', '');
 
         if ($statusFilter) {
             $plots = $plots->filter(fn($p) => $p->status === $statusFilter);
@@ -45,10 +46,10 @@ class PlotController extends Controller
         }
 
         return view('plots.index', [
-            'plots'          => $plots,
-            'statusFilter'   => $statusFilter,
+            'plots' => $plots,
+            'statusFilter' => $statusFilter,
             'categoryFilter' => $categoryFilter,
-            'searchQuery'    => $searchQuery,
+            'searchQuery' => $searchQuery,
         ]);
     }
 
@@ -66,12 +67,12 @@ class PlotController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'plot_id'  => 'required|string|unique:plots',
-            'area'     => 'required|numeric|min:0',
-            'fsi'      => 'required|numeric|min:0',
-            'status'   => 'required|in:available,sold,under_review,booked',
+            'plot_id' => 'required|string|unique:plots',
+            'area' => 'required|numeric|min:0',
+            'fsi' => 'required|numeric|min:0',
+            'status' => 'required|in:available,sold,under_review,booked',
             'category' => 'required|in:PREMIUM,STANDARD,ECO',
-            'road'     => 'required|string',
+            'road' => 'required|string',
             'plot_type' => 'required|string',
         ]);
 
@@ -83,19 +84,19 @@ class PlotController extends Controller
 
         // Create Plot
         $plot = Plot::create([
-            'plot_id'           => $request->plot_id,
-            'area'              => $request->area,
-            'fsi'               => $request->fsi,
-            'permissible_area'  => $request->permissible_area,
-            'rl'                => $request->rl ?? '',
-            'status'            => $request->status,
-            'road'              => $request->road,
-            'plot_type'         => $request->plot_type,
-            'category'          => $request->category,
-            'corner'            => $request->has('corner'),
-            'garden'            => $request->has('garden'),
-            'notes'             => $request->notes ?? '',
-            'created_by'        => Session::get('user_id'),
+            'plot_id' => $request->plot_id,
+            'area' => $request->area,
+            'fsi' => $request->fsi,
+            'permissible_area' => $request->permissible_area,
+            'rl' => $request->rl ?? '',
+            'status' => $request->status,
+            'road' => $request->road,
+            'plot_type' => $request->plot_type,
+            'category' => $request->category,
+            'corner' => $request->has('corner'),
+            'garden' => $request->has('garden'),
+            'notes' => $request->notes ?? '',
+            'created_by' => Session::get('user_id'),
         ]);
 
         // Save Polygon Points
@@ -125,12 +126,12 @@ class PlotController extends Controller
         $plot = Plot::withTrashed()->findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'plot_id'  => 'required|string|unique:plots,plot_id,' . $id,
-            'area'     => 'required|numeric|min:0',
-            'fsi'      => 'required|numeric|min:0',
-            'status'   => 'required|in:available,sold,under_review,booked',
+            'plot_id' => 'required|string|unique:plots,plot_id,' . $id,
+            'area' => 'required|numeric|min:0',
+            'fsi' => 'required|numeric|min:0',
+            'status' => 'required|in:available,sold,under_review,booked',
             'category' => 'required|in:PREMIUM,STANDARD,ECO',
-            'road'     => 'required|string',
+            'road' => 'required|string',
             'plot_type' => 'required|string',
         ]);
 
@@ -141,19 +142,19 @@ class PlotController extends Controller
         }
 
         $plot->update([
-            'plot_id'           => $request->plot_id,
-            'area'              => $request->area,
-            'fsi'               => $request->fsi,
-            'permissible_area'  => $request->permissible_area,
-            'rl'                => $request->rl ?? '',
-            'status'            => $request->status,
-            'road'              => $request->road,
-            'plot_type'         => $request->plot_type,
-            'category'          => $request->category,
-            'corner'            => $request->has('corner'),
-            'garden'            => $request->has('garden'),
-            'notes'             => $request->notes ?? '',
-            'updated_by'        => Session::get('user_id'),
+            'plot_id' => $request->plot_id,
+            'area' => $request->area,
+            'fsi' => $request->fsi,
+            'permissible_area' => $request->permissible_area,
+            'rl' => $request->rl ?? '',
+            'status' => $request->status,
+            'road' => $request->road,
+            'plot_type' => $request->plot_type,
+            'category' => $request->category,
+            'corner' => $request->has('corner'),
+            'garden' => $request->has('garden'),
+            'notes' => $request->notes ?? '',
+            'updated_by' => Session::get('user_id'),
         ]);
 
         // Delete old points and re-save
@@ -293,11 +294,11 @@ class PlotController extends Controller
         $isFirst = $plot->activeImages()->count() === 0;
 
         PlotImage::create([
-            'plot_id'     => $plot->id,
-            'image_name'  => $request->image_name,
-            'image_path'  => $request->image_path,
-            'is_primary'  => $isFirst,
-            'sort_order'  => $plot->activeImages()->count(),
+            'plot_id' => $plot->id,
+            'image_name' => $request->image_name,
+            'image_path' => $request->image_path,
+            'is_primary' => $isFirst,
+            'sort_order' => $plot->activeImages()->count(),
         ]);
 
         return redirect()->route('plots.edit', $plotId)
@@ -310,8 +311,8 @@ class PlotController extends Controller
         $plot = Plot::findOrFail($plotId);
 
         $validator = Validator::make($request->all(), [
-            'image_name'  => 'required|string|max:255',
-            'image_file'  => 'required|image|mimes:jpg,jpeg,png,gif,webp|max:5120',
+            'image_name' => 'required|string|max:255',
+            'image_file' => 'required|image|mimes:jpg,jpeg,png,gif,webp|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -323,11 +324,11 @@ class PlotController extends Controller
         $isFirst = $plot->activeImages()->count() === 0;
 
         PlotImage::create([
-            'plot_id'     => $plot->id,
-            'image_name'  => $request->image_name,
-            'image_path'  => $path,
-            'is_primary'  => $isFirst,
-            'sort_order'  => $plot->activeImages()->count(),
+            'plot_id' => $plot->id,
+            'image_name' => $request->image_name,
+            'image_path' => $path,
+            'is_primary' => $isFirst,
+            'sort_order' => $plot->activeImages()->count(),
         ]);
 
         return redirect()->route('plots.edit', $plotId)
@@ -376,105 +377,184 @@ class PlotController extends Controller
     // ─────────────────────────────────────────────
     // EXCEL TEMPLATE DOWNLOAD
     // ─────────────────────────────────────────────
-  /**
- * Download import template
- */
-public function downloadTemplate()
-{
-    // Create CSV template if PhpSpreadsheet not installed
-    $templateData = [
-        ['Plot ID', 'Plot Type', 'Area', 'FSI', 'RL', 'Road', 'Status', 'Category', 'Corner', 'Garden', 'Notes'],
-        ['Plot-101', 'Land parcel', '5035.46', '1.1', 'RL 150.5', '12MTR', 'available', 'PREMIUM', 'Yes', 'No', 'Sample plot notes'],
-        ['Plot-102', 'Residential', '2500.00', '1.2', '', '15 MTR', 'booked', 'STANDARD', 'No', 'Yes', ''],
-        ['Plot-103', 'Commercial', '10000.00', '1.5', 'RL 200.0', '24MTR', 'available', 'PREMIUM', 'Yes', 'No', 'Corner commercial plot'],
-    ];
-    
-    // Create CSV content
-    $csv = '';
-    foreach ($templateData as $row) {
-        $csv .= implode(',', $row) . "\n";
+    /**
+     * Download import template
+     */
+    public function downloadTemplate()
+    {
+        $templateData = [
+            [
+                'Plot ID',
+                'Plot Type',
+                'Area',
+                'FSI',
+                'RL',
+                'Road',
+                'Status',
+                'Category',
+                'Corner',
+                'Garden',
+                'Notes',
+                'X',
+                'Y'
+            ],
+
+            // 1) Circle (approx using multiple points)
+            [
+                'Plot-201',
+                'Land parcel',
+                '3140',
+                '1.1',
+                'RL 100.0',
+                '18MTR',
+                'available',
+                'PREMIUM',
+                'No',
+                'No',
+                'Building like shape',
+                '50;60;70;60;50;40;30;40',
+                '40;50;40;30;20;30;40;50'
+            ],
+
+            // 2) Triangle
+            [
+                'Plot-202',
+                'Residential',
+                '1800',
+                '1.0',
+                'RL 110.0',
+                '12MTR',
+                'available',
+                'STANDARD',
+                'Yes',
+                'No',
+                'Triangle shape',
+                '10;40;25',
+                '10;10;40'
+            ],
+
+            // 3) Square
+            [
+                'Plot-203',
+                'Residential',
+                '1600',
+                '1.0',
+                'RL 115.0',
+                '15MTR',
+                'available',
+                'STANDARD',
+                'No',
+                'Yes',
+                'Square shape',
+                '10;40;40;10',
+                '10;10;40;40'
+            ],
+
+            // 4) Irregular / real plot-like shape
+            [
+                'Plot-204',
+                'Commercial',
+                '5200',
+                '1.5',
+                'RL 130.0',
+                '24MTR',
+                'under_review',
+                'PREMIUM',
+                'Yes',
+                'Yes',
+                'Irregular plot shape',
+                '5;20;45;60;55;30',
+                '10;5;15;35;55;45'
+            ],
+        ];
+
+        // Create CSV content
+        $csv = '';
+        foreach ($templateData as $row) {
+            $csv .= implode(',', $row) . "\n";
+        }
+
+        // Create temporary file
+        $tempFile = tempnam(sys_get_temp_dir(), 'plot_template_') . '.csv';
+        file_put_contents($tempFile, $csv);
+
+        // Return download response
+        return response()->download($tempFile, 'plot-import-template.csv', [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="plot-import-template.csv"',
+        ])->deleteFileAfterSend(true);
     }
-    
-    // Create temporary file
-    $tempFile = tempnam(sys_get_temp_dir(), 'plot_template_') . '.csv';
-    file_put_contents($tempFile, $csv);
-    
-    // Return download response
-    return response()->download($tempFile, 'plot-import-template.csv', [
-        'Content-Type' => 'text/csv',
-        'Content-Disposition' => 'attachment; filename="plot-import-template.csv"',
-    ])->deleteFileAfterSend(true);
-}
-/**
- * Simple CSV import without PhpSpreadsheet
- */
-public function simpleImport(Request $request)
-{
-    $request->validate([
-        'csv_file' => 'required|file|mimes:csv,txt|max:2048',
-    ]);
-    
-    try {
-        $file = $request->file('csv_file');
-        $path = $file->getRealPath();
-        
-        $successCount = 0;
-        $errors = [];
-        
-        // Read CSV file
-        if (($handle = fopen($path, 'r')) !== false) {
-            // Skip header
-            fgetcsv($handle);
-            
-            while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-                if (count($data) < 7) {
-                    continue; // Skip invalid rows
+
+    /**
+     * Simple CSV import without PhpSpreadsheet
+     */
+    public function simpleImport(Request $request)
+    {
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:2048',
+        ]);
+
+        try {
+            $file = $request->file('csv_file');
+            $path = $file->getRealPath();
+
+            $successCount = 0;
+            $errors = [];
+
+            // Read CSV file
+            if (($handle = fopen($path, 'r')) !== false) {
+                // Skip header
+                fgetcsv($handle);
+
+                while (($data = fgetcsv($handle, 1000, ',')) !== false) {
+                    if (count($data) < 7) {
+                        continue; // Skip invalid rows
+                    }
+
+                    try {
+                        // Create plot
+                        Plot::create([
+                            'plot_id' => $data[0] ?? 'PLOT-' . time(),
+                            'plot_type' => $data[1] ?? 'Land parcel',
+                            'area' => floatval($data[2] ?? 0),
+                            'fsi' => floatval($data[3] ?? 1.1),
+                            'permissible_area' => floatval($data[2] ?? 0) * floatval($data[3] ?? 1.1),
+                            'road' => $data[4] ?? '12MTR',
+                            'status' => $data[5] ?? 'available',
+                            'category' => $data[6] ?? 'STANDARD',
+                            'notes' => $data[7] ?? null,
+                        ]);
+
+                        $successCount++;
+                    } catch (\Exception $e) {
+                        $errors[] = "Error importing row: " . $e->getMessage();
+                    }
                 }
-                
-                try {
-                    // Create plot
-                    Plot::create([
-                        'plot_id' => $data[0] ?? 'PLOT-' . time(),
-                        'plot_type' => $data[1] ?? 'Land parcel',
-                        'area' => floatval($data[2] ?? 0),
-                        'fsi' => floatval($data[3] ?? 1.1),
-                        'permissible_area' => floatval($data[2] ?? 0) * floatval($data[3] ?? 1.1),
-                        'road' => $data[4] ?? '12MTR',
-                        'status' => $data[5] ?? 'available',
-                        'category' => $data[6] ?? 'STANDARD',
-                        'notes' => $data[7] ?? null,
-                    ]);
-                    
-                    $successCount++;
-                } catch (\Exception $e) {
-                    $errors[] = "Error importing row: " . $e->getMessage();
-                }
+
+                fclose($handle);
             }
-            
-            fclose($handle);
+
+            $message = "Imported $successCount plots successfully.";
+            if (!empty($errors)) {
+                $message .= " Errors: " . implode(', ', array_slice($errors, 0, 3));
+            }
+
+            return redirect()->route('plots.index')
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            return redirect()->route('plots.index')
+                ->with('error', 'Import failed: ' . $e->getMessage());
         }
-        
-        $message = "Imported $successCount plots successfully.";
-        if (!empty($errors)) {
-            $message .= " Errors: " . implode(', ', array_slice($errors, 0, 3));
-        }
-        
-        return redirect()->route('plots.index')
-            ->with('success', $message);
-            
-    } catch (\Exception $e) {
-        return redirect()->route('plots.index')
-            ->with('error', 'Import failed: ' . $e->getMessage());
     }
-}
-// PlotController.php मध्ये
-/**
- * Show import form
- */
-public function showImportForm()
-{
-    return view('plots.import');
-}
+    // PlotController.php मध्ये
+    /**
+     * Show import form
+     */
+    public function showImportForm()
+    {
+        return view('plots.import');
+    }
     // ─────────────────────────────────────────────
     // EXCEL IMPORT
     // ─────────────────────────────────────────────
@@ -566,63 +646,96 @@ public function showImportForm()
     /**
      * Import single plot row
      */
-    private function importPlotRow($row, &$successCount, &$duplicateCount, &$errorRows)
+
+    private function importPlotRow(array $row, &$successCount, &$duplicateCount, array &$errorRows)
     {
-        // Skip empty rows
         if (empty(array_filter($row))) {
             return;
         }
 
-        // Extract data from row (adjust indexes as per your template)
-        $plotId = $row[0] ?? 'PLOT-' . time() . '-' . $successCount;
-        $plotType = $row[1] ?? 'Land parcel';
-        $area = floatval($row[2] ?? 0);
-        $fsi = floatval($row[3] ?? 1.1);
-        $rl = $row[4] ?? null;
-        $road = $row[5] ?? '12MTR';
-        $status = $row[6] ?? 'available';
-        $category = $row[7] ?? 'STANDARD';
-        $corner = isset($row[8]) ? (strtolower($row[8]) === 'yes') : false;
-        $garden = isset($row[9]) ? (strtolower($row[9]) === 'yes') : false;
-        $notes = $row[10] ?? null;
+        try {
+            DB::transaction(function () use ($row, &$successCount) {
 
-        // Validate required fields
-        if (empty($plotId)) {
-            throw new \Exception('Plot ID is required');
+                // Column mapping 
+                [
+                    $plotCode,   // 0
+                    $plotType,   // 1
+                    $area,       // 2
+                    $fsi,        // 3
+                    $rl,         // 4
+                    $road,       // 5
+                    $status,     // 6
+                    $category,   // 7
+                    $corner,     // 8
+                    $garden,     // 9
+                    $notes,      // 10
+                    $xRaw,       // 11 
+                    $yRaw        // 12 
+                ] = array_pad($row, 13, null);
+
+                if (!$plotCode) {
+                    throw new \Exception('Plot ID is required');
+                }
+
+                if ($area !== null && $area !== '' && (float) $area <= 0) {
+                    throw new \Exception("Invalid area for Plot ID {$plotCode}");
+                }
+
+                if ($fsi !== null && $fsi !== '' && (float) $fsi <= 0) {
+                    throw new \Exception("Invalid FSI for Plot ID {$plotCode}");
+                }
+
+                $plot = Plot::firstOrCreate(
+                    ['plot_id' => trim($plotCode)],
+                    [
+                        'plot_type' => $plotType ?? 'Land parcel',
+                        'area' => (float) ($area ?? 0),
+                        'fsi' => (float) ($fsi ?? 1.1),
+                        'permissible_area' => (float) ($area ?? 0) * (float) ($fsi ?? 1.1),
+                        'rl' => $rl,
+                        'road' => $road ?? '12MTR',
+                        'status' => $status ?? 'available',
+                        'category' => $category ?? 'STANDARD',
+                        'corner' => strtolower($corner ?? '') === 'yes',
+                        'garden' => strtolower($garden ?? '') === 'yes',
+                        'notes' => $notes,
+                    ]
+                );
+
+                if ($xRaw !== null && $yRaw !== null && trim($xRaw) !== '' && trim($yRaw) !== '') {
+
+                    $xValues = array_map('trim', explode(';', $xRaw));
+                    $yValues = array_map('trim', explode(';', $yRaw));
+
+                    if (count($xValues) !== count($yValues)) {
+                        throw new \Exception(
+                            "X and Y coordinate count mismatch for Plot ID {$plotCode}"
+                        );
+                    }
+
+                    foreach ($xValues as $i => $x) {
+                        $y = $yValues[$i];
+
+                        if (!is_numeric($x) || !is_numeric($y)) {
+                            throw new \Exception(
+                                "Invalid coordinate value for Plot ID {$plotCode}"
+                            );
+                        }
+
+                        PlotPoint::create([
+                            'plot_id' => $plot->id,
+                            'x' => (float) $x,
+                            'y' => (float) $y,
+                            'sort_order' => $i,
+                        ]);
+                    }
+                }
+
+                $successCount++;
+            });
+        } catch (\Exception $e) {
+            $errorRows[] = $e->getMessage();
         }
-
-        if ($area <= 0) {
-            throw new \Exception('Area must be greater than 0');
-        }
-
-        if ($fsi <= 0) {
-            throw new \Exception('FSI must be greater than 0');
-        }
-
-        // Check for duplicate plot ID
-        $existingPlot = Plot::where('plot_id', $plotId)->first();
-        if ($existingPlot) {
-            $duplicateCount++;
-            throw new \Exception("Plot ID '$plotId' already exists");
-        }
-
-        // Create plot
-        Plot::create([
-            'plot_id' => $plotId,
-            'plot_type' => $plotType,
-            'area' => $area,
-            'fsi' => $fsi,
-            'permissible_area' => $area * $fsi,
-            'rl' => $rl,
-            'road' => $road,
-            'status' => $status,
-            'category' => $category,
-            'corner' => $corner,
-            'garden' => $garden,
-            'notes' => $notes,
-        ]);
-
-        $successCount++;
     }
 
     // ─────────────────────────────────────────────
@@ -635,10 +748,10 @@ public function showImportForm()
             foreach ($request->points as $index => $point) {
                 if (isset($point['x']) && isset($point['y'])) {
                     PlotPoint::create([
-                        'plot_id'     => $plot->id,
-                        'x'           => (float)$point['x'],
-                        'y'           => (float)$point['y'],
-                        'sort_order'  => $index,
+                        'plot_id' => $plot->id,
+                        'x' => (float) $point['x'],
+                        'y' => (float) $point['y'],
+                        'sort_order' => $index,
                     ]);
                 }
             }
@@ -652,7 +765,7 @@ public function showImportForm()
             foreach ($request->new_images as $img) {
                 if (!empty($img['name']) && !empty($img['path'])) {
                     PlotImage::create([
-                        'plot_id'    => $plot->id,
+                        'plot_id' => $plot->id,
                         'image_name' => $img['name'],
                         'image_path' => $img['path'],
                         'is_primary' => $plot->activeImages()->count() === 0,
@@ -668,7 +781,7 @@ public function showImportForm()
                 $name = $request->new_image_names[$index] ?? 'image_' . ($index + 1);
                 $path = $file->store('plots', 'public');
                 PlotImage::create([
-                    'plot_id'    => $plot->id,
+                    'plot_id' => $plot->id,
                     'image_name' => $name,
                     'image_path' => $path,
                     'is_primary' => $plot->activeImages()->count() === 0,
@@ -677,4 +790,25 @@ public function showImportForm()
             }
         }
     }
+
+    // ─────────────────────────────────────────────
+    // Get all plots ( WITHOUT THE LOGIN OR AUTHENTICATION...)
+    // ─────────────────────────────────────────────
+    public function getPlotsJson()
+    {
+        return response()->json(
+            Plot::all()
+        );
+    }
+
+    // ─────────────────────────────────────────────
+    //  Get all plot points ( WITHOUT THE LOGIN OR AUTHENTICATION... )
+    // ─────────────────────────────────────────────
+    public function getPlotPointsJson()
+    {
+        return response()->json(
+            PlotPoint::all()
+        );
+    }
+
 }
