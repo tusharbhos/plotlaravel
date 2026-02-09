@@ -52,9 +52,9 @@
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400" required />
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Permissible Area</label>
-                        <input type="number" name="permissible_area" id="permissibleArea" value="{{ old('permissible_area', $plot->permissible_area) }}" step="0.01" min="0"
-                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400 bg-gray-50" readonly />
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Permissible Area *</label>
+                        <input type="number" name="permissible_area" value="{{ old('permissible_area', $plot->permissible_area) }}" step="0.01" min="0"
+                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400" required />
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">RL</label>
@@ -65,10 +65,10 @@
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Road Width *</label>
                         <select name="road" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400 bg-white" required>
                             <option value="">Select Road</option>
+                            <option value="9MTR" {{ old('road', $plot->road) === '9MTR' ? 'selected' : '' }}>9 MTR</option>
                             <option value="12MTR" {{ old('road', $plot->road) === '12MTR' ? 'selected' : '' }}>12 MTR</option>
-                            <option value="15 MTR" {{ old('road', $plot->road) === '15 MTR' ? 'selected' : '' }}>15 MTR</option>
+                            <option value="15MTR" {{ old('road', $plot->road) === '15MTR' ? 'selected' : '' }}>15 MTR</option>
                             <option value="18MTR" {{ old('road', $plot->road) === '18MTR' ? 'selected' : '' }}>18 MTR</option>
-                            <option value="24MTR" {{ old('road', $plot->road) === '24MTR' ? 'selected' : '' }}>24 MTR</option>
                         </select>
                     </div>
                     <div>
@@ -125,12 +125,12 @@
                             <div class="flex-1 flex items-center gap-2">
                                 <div class="flex-1">
                                     <label class="block text-xs text-gray-400 mb-0.5">X</label>
-                                    <input type="number" name="points[{{ $i }}][x]" value="{{ $pt->x }}" step="0.1"
+                                    <input type="number" name="points[{{ $i }}][x]" value="{{ $pt->x }}" step="0.01"
                                         class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" oninput="updatePreview()" />
                                 </div>
                                 <div class="flex-1">
                                     <label class="block text-xs text-gray-400 mb-0.5">Y</label>
-                                    <input type="number" name="points[{{ $i }}][y]" value="{{ $pt->y }}" step="0.1"
+                                    <input type="number" name="points[{{ $i }}][y]" value="{{ $pt->y }}" step="0.01"
                                         class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" oninput="updatePreview()" />
                                 </div>
                             </div>
@@ -225,7 +225,7 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="bg-gray-900 text-white px-5 py-3 flex items-center justify-between">
                     <h3 class="font-bold text-sm">Plot Summary</h3>
-                    <span class="text-xs bg-{{ $plot->status === 'available' ? 'green' : 'gray' }}-200 text-{{ $plot->status === 'available' ? 'green' : 'gray' }}-700 px-2 py-0.5 rounded-full font-semibold">{{ ucfirst(str_replace('_',' ',$plot->status)) }}</span>
+                    <span class="text-xs bg-{{ $plot->status === 'available' ? 'green' : ($plot->status === 'sold' ? 'red' : ($plot->status === 'booked' ? 'yellow' : 'gray')) }}-200 text-{{ $plot->status === 'available' ? 'green' : ($plot->status === 'sold' ? 'red' : ($plot->status === 'booked' ? 'yellow' : 'gray')) }}-700 px-2 py-0.5 rounded-full font-semibold">{{ ucfirst(str_replace('_',' ',$plot->status)) }}</span>
                 </div>
                 <div class="p-5 space-y-3">
                     <div class="flex justify-between text-sm">
@@ -234,11 +234,23 @@
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-500">Area</span>
-                        <span class="font-semibold text-gray-800">{{ number_format($plot->area, 2) }}</span>
+                        <span class="font-semibold text-gray-800">{{ number_format($plot->area, 2) }} Sq.Ft</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">FSI</span>
+                        <span class="font-semibold text-gray-800">{{ number_format($plot->fsi, 2) }}</span>
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-500">Perm. Area</span>
-                        <span class="font-semibold text-gray-800">{{ number_format($plot->permissible_area, 2) }}</span>
+                        <span class="font-semibold text-gray-800">{{ number_format($plot->permissible_area, 2) }} Sq.Ft</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Road</span>
+                        <span class="font-semibold text-gray-800">{{ $plot->road }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Category</span>
+                        <span class="font-semibold text-gray-800">{{ $plot->category }}</span>
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-500">Points</span>
@@ -300,12 +312,12 @@ function addPoint() {
         <div class="flex-1 flex items-center gap-2">
             <div class="flex-1">
                 <label class="block text-xs text-gray-400 mb-0.5">X</label>
-                <input type="number" name="points[${pointIndex}][x]" step="0.1" placeholder="X"
+                <input type="number" name="points[${pointIndex}][x]" step="0.01" placeholder="X"
                     class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" oninput="updatePreview()" />
             </div>
             <div class="flex-1">
                 <label class="block text-xs text-gray-400 mb-0.5">Y</label>
-                <input type="number" name="points[${pointIndex}][y]" step="0.1" placeholder="Y"
+                <input type="number" name="points[${pointIndex}][y]" step="0.01" placeholder="Y"
                     class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" oninput="updatePreview()" />
             </div>
         </div>
@@ -342,15 +354,8 @@ function updatePointCount() {
 }
 
 document.addEventListener("input", function(e) {
-    if (e.target.name === "area" || e.target.name === "fsi") calcPermArea();
     if (e.target.name.includes("points[")) updatePreview();
 });
-
-function calcPermArea() {
-    const area = parseFloat(document.querySelector("[name=area]").value) || 0;
-    const fsi  = parseFloat(document.querySelector("[name=fsi]").value) || 1.1;
-    document.getElementById("permissibleArea").value = (area * fsi).toFixed(2);
-}
 
 function updatePreview() {
     const rows = document.querySelectorAll(".point-row");

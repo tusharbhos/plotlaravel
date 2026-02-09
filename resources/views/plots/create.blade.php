@@ -47,23 +47,23 @@
                     <!-- Area -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Area (Sq.Ft) <span class="text-red-500">*</span></label>
-                        <input type="number" name="area" value="{{ old('area') }}"  min="0"
+                        <input type="number" name="area" value="{{ old('area') }}" step="0.01" min="0"
                             placeholder="e.g. 5035.46"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400" required />
                     </div>
                     <!-- FSI -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">FSI <span class="text-red-500">*</span></label>
-                        <input type="number" name="fsi" value="{{ old('fsi', '1.1') }}"  min="0"
+                        <input type="number" name="fsi" value="{{ old('fsi', '1.1') }}" step="0.1" min="0"
                             placeholder="1.1"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400" required />
                     </div>
                     <!-- Permissible Area -->
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Permissible Area</label>
-                        <input type="number" name="permissible_area" value="{{ old('permissible_area') }}"  min="0"
-                            placeholder="e.g. 505.46"
-                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400"  />
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Permissible Area <span class="text-red-500">*</span></label>
+                        <input type="number" name="permissible_area" value="{{ old('permissible_area') }}" step="0.01" min="0"
+                            placeholder="e.g. 5539.00"
+                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400" required />
                     </div>
                     <!-- RL -->
                     <div>
@@ -77,8 +77,9 @@
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Road Width <span class="text-red-500">*</span></label>
                         <select name="road" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400 bg-white" required>
                             <option value="">Select Road</option>
+                            <option value="9MTR" {{ old('road') === '9MTR' ? 'selected' : '' }}>9 MTR</option>
                             <option value="12MTR" {{ old('road') === '12MTR' ? 'selected' : '' }}>12 MTR</option>
-                            <option value="15 MTR" {{ old('road') === '15 MTR' ? 'selected' : '' }}>15 MTR</option>
+                            <option value="15MTR" {{ old('road') === '15MTR' ? 'selected' : '' }}>15 MTR</option>
                             <option value="18MTR" {{ old('road') === '18MTR' ? 'selected' : '' }}>18 MTR</option>
                             <option value="24MTR" {{ old('road') === '24MTR' ? 'selected' : '' }}>24 MTR</option>
                         </select>
@@ -145,13 +146,13 @@
                             <div class="flex-1 flex items-center gap-2">
                                 <div class="flex-1">
                                     <label class="block text-xs text-gray-400 mb-0.5">X Coordinate</label>
-                                    <input type="number" name="points[0][x]"  placeholder="X"
-                                        class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" />
+                                    <input type="number" name="points[0][x]" step="0.01" placeholder="X"
+                                        class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" oninput="updatePreview()" />
                                 </div>
                                 <div class="flex-1">
                                     <label class="block text-xs text-gray-400 mb-0.5">Y Coordinate</label>
-                                    <input type="number" name="points[0][y]"  placeholder="Y"
-                                        class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" />
+                                    <input type="number" name="points[0][y]" step="0.01" placeholder="Y"
+                                        class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" oninput="updatePreview()" />
                                 </div>
                             </div>
                             <button type="button" class="text-gray-400 hover:text-red-500 transition remove-point-btn" onclick="removePoint(this)" title="Remove">
@@ -200,8 +201,16 @@
                         <span id="summaryArea" class="font-semibold text-gray-800">—</span>
                     </div>
                     <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">FSI</span>
+                        <span id="summaryFsi" class="font-semibold text-gray-800">{{ old('fsi', '1.1') }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
                         <span class="text-gray-500">Perm. Area</span>
                         <span id="summaryPermArea" class="font-semibold text-gray-800">—</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Road</span>
+                        <span id="summaryRoad" class="font-semibold text-gray-800">—</span>
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-500">Polygon Pts</span>
@@ -266,13 +275,13 @@ function addPoint() {
         <div class="flex-1 flex items-center gap-2">
             <div class="flex-1">
                 <label class="block text-xs text-gray-400 mb-0.5">X Coordinate</label>
-                <input type="number" name="points[${pointIndex}][x]"  placeholder="X"
+                <input type="number" name="points[${pointIndex}][x]" step="0.01" placeholder="X"
                     class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400"
                     oninput="updatePreview()" />
             </div>
             <div class="flex-1">
                 <label class="block text-xs text-gray-400 mb-0.5">Y Coordinate</label>
-                <input type="number" name="points[${pointIndex}][y]"  placeholder="Y"
+                <input type="number" name="points[${pointIndex}][y]" step="0.01" placeholder="Y"
                     class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400"
                     oninput="updatePreview()" />
             </div>
@@ -320,14 +329,21 @@ function updatePointCount() {
 document.addEventListener("input", function(e) {
     const target = e.target;
     if (target.name === "plot_id")    document.getElementById("summaryPlotId").textContent = target.value || "—";
-    if (target.name === "area")       { document.getElementById("summaryArea").textContent = target.value ? Number(target.value).toLocaleString() : "—"; calcPermArea(); }
-    if (target.name === "fsi")        calcPermArea();
+    if (target.name === "area")       { 
+        document.getElementById("summaryArea").textContent = target.value ? Number(target.value).toLocaleString() + " Sq.Ft" : "—"; 
+    }
+    if (target.name === "fsi")        document.getElementById("summaryFsi").textContent = target.value || "1.1";
+    if (target.name === "permissible_area") {
+        document.getElementById("summaryPermArea").textContent = target.value ? Number(target.value).toLocaleString() + " Sq.Ft" : "—";
+    }
+    if (target.name === "road") {
+        const roadText = target.options[target.selectedIndex].text;
+        document.getElementById("summaryRoad").textContent = roadText === "Select Road" ? "—" : roadText;
+    }
     if (target.name === "status")     document.getElementById("summaryStatus").textContent = target.options[target.selectedIndex].text;
     if (target.name === "category")   document.getElementById("summaryCategory").textContent = target.value;
     if (target.name.includes("points["))  updatePreview();
 });
-
-
 
 // ─── SVG Polygon Preview ───
 function updatePreview() {
@@ -382,5 +398,6 @@ function previewImages(input) {
 
 // Init
 updatePointCount();
+updatePreview();
 </script>
 @endpush

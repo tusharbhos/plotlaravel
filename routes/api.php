@@ -2,6 +2,7 @@
 
 // routes/api.php
 use App\Http\Controllers\PlotController;
+use Illuminate\Support\Facades\Route;
 
 // use it like this : http://127.0.0.1:8000/api/v1/plots
 

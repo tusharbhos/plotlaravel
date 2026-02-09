@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
-use PhpOffice\PhpSpreadsheet\IOFactory; // Add this line
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
@@ -70,6 +70,7 @@ class PlotController extends Controller
             'plot_id' => 'required|string|unique:plots',
             'area' => 'required|numeric|min:0',
             'fsi' => 'required|numeric|min:0',
+            'permissible_area' => 'required|numeric|min:0',
             'status' => 'required|in:available,sold,under_review,booked',
             'category' => 'required|in:PREMIUM,STANDARD,ECO',
             'road' => 'required|string',
@@ -129,6 +130,7 @@ class PlotController extends Controller
             'plot_id' => 'required|string|unique:plots,plot_id,' . $id,
             'area' => 'required|numeric|min:0',
             'fsi' => 'required|numeric|min:0',
+            'permissible_area' => 'required|numeric|min:0',
             'status' => 'required|in:available,sold,under_review,booked',
             'category' => 'required|in:PREMIUM,STANDARD,ECO',
             'road' => 'required|string',
@@ -388,6 +390,7 @@ class PlotController extends Controller
                 'Plot Type',
                 'Area',
                 'FSI',
+                'Permissible Area',
                 'RL',
                 'Road',
                 'Status',
@@ -405,6 +408,7 @@ class PlotController extends Controller
                 'Land parcel',
                 '3140',
                 '1.1',
+                '3454',
                 'RL 100.0',
                 '18MTR',
                 'available',
@@ -422,6 +426,7 @@ class PlotController extends Controller
                 'Residential',
                 '1800',
                 '1.0',
+                '1800',
                 'RL 110.0',
                 '12MTR',
                 'available',
@@ -439,6 +444,7 @@ class PlotController extends Controller
                 'Residential',
                 '1600',
                 '1.0',
+                '1600',
                 'RL 115.0',
                 '15MTR',
                 'available',
@@ -456,6 +462,7 @@ class PlotController extends Controller
                 'Commercial',
                 '5200',
                 '1.5',
+                '7800',
                 'RL 130.0',
                 '24MTR',
                 'under_review',
@@ -514,15 +521,15 @@ class PlotController extends Controller
                     try {
                         // Create plot
                         Plot::create([
-                            'plot_id' => $data[0] ?? 'PLOT-' . time(),
-                            'plot_type' => $data[1] ?? 'Land parcel',
-                            'area' => floatval($data[2] ?? 0),
-                            'fsi' => floatval($data[3] ?? 1.1),
-                            'permissible_area' => floatval($data[2] ?? 0) * floatval($data[3] ?? 1.1),
-                            'road' => $data[4] ?? '12MTR',
-                            'status' => $data[5] ?? 'available',
-                            'category' => $data[6] ?? 'STANDARD',
-                            'notes' => $data[7] ?? null,
+                            'plot_id'          => $data[0] ?? 'PLOT-' . time(),
+                            'plot_type'        => $data[1] ?? 'Land parcel',
+                            'area'             => floatval($data[2] ?? 0),
+                            'fsi'              => floatval($data[3] ?? 1.1),
+                            'permissible_area' => floatval($data[4] ?? 0),
+                            'road'             => $data[5] ?? '12MTR',
+                            'status'           => $data[6] ?? 'available',
+                            'category'         => $data[7] ?? 'STANDARD',
+                            'notes'            => $data[8] ?? null,
                         ]);
 
                         $successCount++;
@@ -646,7 +653,6 @@ class PlotController extends Controller
     /**
      * Import single plot row
      */
-
     private function importPlotRow(array $row, &$successCount, &$duplicateCount, array &$errorRows)
     {
         if (empty(array_filter($row))) {
@@ -654,24 +660,24 @@ class PlotController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($row, &$successCount) {
-
+            DB::transaction(function () use ($row, &$successCount, &$duplicateCount) {
                 // Column mapping 
                 [
-                    $plotCode,   // 0
-                    $plotType,   // 1
-                    $area,       // 2
-                    $fsi,        // 3
-                    $rl,         // 4
-                    $road,       // 5
-                    $status,     // 6
-                    $category,   // 7
-                    $corner,     // 8
-                    $garden,     // 9
-                    $notes,      // 10
-                    $xRaw,       // 11 
-                    $yRaw        // 12 
-                ] = array_pad($row, 13, null);
+                    $plotCode,          // 0
+                    $plotType,          // 1
+                    $area,              // 2
+                    $fsi,               // 3
+                    $permissibleArea,   // 4 - DIRECT VALUE FROM EXCEL
+                    $rl,                // 5
+                    $road,              // 6
+                    $status,            // 7
+                    $category,          // 8
+                    $corner,            // 9
+                    $garden,            // 10
+                    $notes,             // 11
+                    $xRaw,              // 12 
+                    $yRaw               // 13 
+                ] = array_pad($row, 14, null);
 
                 if (!$plotCode) {
                     throw new \Exception('Plot ID is required');
@@ -685,25 +691,35 @@ class PlotController extends Controller
                     throw new \Exception("Invalid FSI for Plot ID {$plotCode}");
                 }
 
-                $plot = Plot::firstOrCreate(
-                    ['plot_id' => trim($plotCode)],
-                    [
-                        'plot_type' => $plotType ?? 'Land parcel',
-                        'area' => (float) ($area ?? 0),
-                        'fsi' => (float) ($fsi ?? 1.1),
-                        'permissible_area' => (float) ($area ?? 0) * (float) ($fsi ?? 1.1),
-                        'rl' => $rl,
-                        'road' => $road ?? '12MTR',
-                        'status' => $status ?? 'available',
-                        'category' => $category ?? 'STANDARD',
-                        'corner' => strtolower($corner ?? '') === 'yes',
-                        'garden' => strtolower($garden ?? '') === 'yes',
-                        'notes' => $notes,
-                    ]
-                );
+                if ($permissibleArea !== null && $permissibleArea !== '' && (float) $permissibleArea < 0) {
+                    throw new \Exception("Invalid permissible area for Plot ID {$plotCode}");
+                }
 
+                // Check if plot already exists
+                $existingPlot = Plot::where('plot_id', trim($plotCode))->first();
+                if ($existingPlot) {
+                    $duplicateCount++;
+                    return; // Skip duplicates
+                }
+
+                // Create plot - NO CALCULATION, use direct value from Excel
+                $plot = Plot::create([
+                    'plot_id'          => trim($plotCode),
+                    'plot_type'        => $plotType ?? 'Land parcel',
+                    'area'             => (float) ($area ?? 0),
+                    'fsi'              => (float) ($fsi ?? 1.1),
+                    'permissible_area' => (float) ($permissibleArea ?? 0),
+                    'rl'               => $rl,
+                    'road'             => $road ?? '12MTR',
+                    'status'           => $status ?? 'available',
+                    'category'         => $category ?? 'STANDARD',
+                    'corner'           => strtolower($corner ?? '') === 'yes',
+                    'garden'           => strtolower($garden ?? '') === 'yes',
+                    'notes'            => $notes,
+                ]);
+
+                // Save polygon points if provided
                 if ($xRaw !== null && $yRaw !== null && trim($xRaw) !== '' && trim($yRaw) !== '') {
-
                     $xValues = array_map('trim', explode(';', $xRaw));
                     $yValues = array_map('trim', explode(';', $yRaw));
 
@@ -810,5 +826,4 @@ class PlotController extends Controller
             PlotPoint::all()
         );
     }
-
 }
