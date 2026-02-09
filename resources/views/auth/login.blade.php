@@ -145,12 +145,7 @@
                 <a href="{{ route('register') }}" class="text-indigo-600 font-semibold hover:underline ml-1">Sign Up</a>
             </p>
 
-            <!-- Demo Credentials -->
-            <div class="mt-5 bg-indigo-50 border border-indigo-100 rounded-lg p-3">
-                <p class="text-xs text-indigo-600 font-semibold mb-1 flex items-center gap-1"><i class="fas fa-info-circle"></i> Demo Credentials</p>
-                <p class="text-xs text-indigo-500">Admin: <span class="font-mono">admin@plotmgmt.com</span> / <span class="font-mono">admin123</span></p>
-                <p class="text-xs text-indigo-500">User: <span class="font-mono">john@plotmgmt.com</span> / <span class="font-mono">john123</span></p>
-            </div>
+            
         </div>
     </div>
 </div>
