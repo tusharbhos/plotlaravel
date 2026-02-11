@@ -36,8 +36,8 @@ class DashboardController extends Controller
         $statusChart = [
             ['label' => 'Available', 'value' => $stats['available_plots'], 'color' => '#10B981'],
             ['label' => 'Sold',      'value' => $stats['sold_plots'],      'color' => '#EF4444'],
-            ['label' => 'Booked',    'value' => $stats['booked_plots'],    'color' => '#3B82F6'],
-            ['label' => 'Under Review','value' => $stats['under_review'], 'color' => '#F59E0B'],
+            ['label' => 'Booked',    'value' => $stats['booked_plots'],    'color' => '#F59E0B'],
+            ['label' => 'Under Review','value' => $stats['under_review'], 'color' => '#6C757D'],
         ];
 
         // Category distribution

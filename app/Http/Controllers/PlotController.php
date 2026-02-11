@@ -548,7 +548,6 @@ class PlotController extends Controller
 
             return redirect()->route('plots.index')
                 ->with('success', $message);
-
         } catch (\Exception $e) {
             return redirect()->route('plots.index')
                 ->with('error', 'Import failed: ' . $e->getMessage());
@@ -661,13 +660,13 @@ class PlotController extends Controller
 
         try {
             DB::transaction(function () use ($row, &$successCount, &$duplicateCount) {
-                // Column mapping 
+
                 [
                     $plotCode,          // 0
                     $plotType,          // 1
                     $area,              // 2
                     $fsi,               // 3
-                    $permissibleArea,   // 4 - DIRECT VALUE FROM EXCEL
+                    $permissibleArea,   // 4
                     $rl,                // 5
                     $road,              // 6
                     $status,            // 7
@@ -683,32 +682,37 @@ class PlotController extends Controller
                     throw new \Exception('Plot ID is required');
                 }
 
-                if ($area !== null && $area !== '' && (float) $area <= 0) {
+                // Normalize numeric values (remove commas)
+                $areaValue = $this->normalizeNumber($area);
+                $fsiValue = $this->normalizeNumber($fsi);
+                $permissibleAreaValue = $this->normalizeNumber($permissibleArea);
+
+                if ($areaValue !== null && $areaValue <= 0) {
                     throw new \Exception("Invalid area for Plot ID {$plotCode}");
                 }
 
-                if ($fsi !== null && $fsi !== '' && (float) $fsi <= 0) {
+                if ($fsiValue !== null && $fsiValue <= 0) {
                     throw new \Exception("Invalid FSI for Plot ID {$plotCode}");
                 }
 
-                if ($permissibleArea !== null && $permissibleArea !== '' && (float) $permissibleArea < 0) {
+                if ($permissibleAreaValue !== null && $permissibleAreaValue < 0) {
                     throw new \Exception("Invalid permissible area for Plot ID {$plotCode}");
                 }
 
-                // Check if plot already exists
+                // Check duplicate
                 $existingPlot = Plot::where('plot_id', trim($plotCode))->first();
                 if ($existingPlot) {
                     $duplicateCount++;
-                    return; // Skip duplicates
+                    return;
                 }
 
-                // Create plot - NO CALCULATION, use direct value from Excel
+                // Create Plot
                 $plot = Plot::create([
                     'plot_id'          => trim($plotCode),
                     'plot_type'        => $plotType ?? 'Land parcel',
-                    'area'             => (float) ($area ?? 0),
-                    'fsi'              => (float) ($fsi ?? 1.1),
-                    'permissible_area' => (float) ($permissibleArea ?? 0),
+                    'area'             => $areaValue ?? 0,
+                    'fsi'              => $fsiValue ?? 1.1,
+                    'permissible_area' => $permissibleAreaValue ?? 0,
                     'rl'               => $rl,
                     'road'             => $road ?? '12MTR',
                     'status'           => $status ?? 'available',
@@ -718,8 +722,9 @@ class PlotController extends Controller
                     'notes'            => $notes,
                 ]);
 
-                // Save polygon points if provided
+                // Save polygon points
                 if ($xRaw !== null && $yRaw !== null && trim($xRaw) !== '' && trim($yRaw) !== '') {
+
                     $xValues = array_map('trim', explode(';', $xRaw));
                     $yValues = array_map('trim', explode(';', $yRaw));
 
@@ -730,18 +735,22 @@ class PlotController extends Controller
                     }
 
                     foreach ($xValues as $i => $x) {
+
                         $y = $yValues[$i];
 
-                        if (!is_numeric($x) || !is_numeric($y)) {
+                        $xVal = $this->normalizeNumber($x);
+                        $yVal = $this->normalizeNumber($y);
+
+                        if ($xVal === null || $yVal === null) {
                             throw new \Exception(
                                 "Invalid coordinate value for Plot ID {$plotCode}"
                             );
                         }
 
                         PlotPoint::create([
-                            'plot_id' => $plot->id,
-                            'x' => (float) $x,
-                            'y' => (float) $y,
+                            'plot_id'    => $plot->id,
+                            'x'          => $xVal,
+                            'y'          => $yVal,
                             'sort_order' => $i,
                         ]);
                     }
@@ -753,6 +762,21 @@ class PlotController extends Controller
             $errorRows[] = $e->getMessage();
         }
     }
+
+/**
+ * Remove comma separators and return numeric value
+ */
+private function normalizeNumber($value)
+{
+    if ($value === null || $value === '') {
+        return null;
+    }
+
+    // Remove commas (34,444 -> 34444)
+    $value = str_replace(',', '', $value);
+
+    return is_numeric($value) ? (float) $value : null;
+}
 
     // ─────────────────────────────────────────────
     // HELPERS
