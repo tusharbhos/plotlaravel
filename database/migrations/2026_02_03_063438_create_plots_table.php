@@ -14,14 +14,14 @@ return new class extends Migration
         Schema::create('plots', function (Blueprint $table) {
             $table->id();
             $table->string('plot_id')->unique(); // e.g. "Plot 9", "Plot 419"
-            $table->double('area')->default(0);
-            $table->double('fsi')->default(1.1);
-            $table->double('permissible_area')->default(0);
+            $table->double('area')->default();
+            $table->double('fsi')->default();
+            $table->double('permissible_area')->default();
             $table->string('rl')->nullable();
-            $table->string('status')->default('available'); // available, sold, under_review, booked
+            $table->string('status')->default(); // available, sold, under_review, booked
             $table->string('road')->nullable(); // e.g. "18MTR", "15 MTR"
-            $table->string('plot_type')->default('Land parcel');
-            $table->string('category')->default('PREMIUM'); // PREMIUM, STANDARD, ECO
+            $table->string('plot_type')->default();
+            $table->string('category')->default(); // PREMIUM, STANDARD, ECO
             $table->boolean('corner')->default(false);
             $table->boolean('garden')->default(false);
             $table->text('notes')->nullable();

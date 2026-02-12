@@ -40,34 +40,33 @@
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Plot Type <span class="text-red-500">*</span></label>
                         <select name="plot_type" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400 bg-white" required>
                             <option value="Land parcel" {{ old('plot_type') === 'Land parcel' ? 'selected' : '' }}>Land Parcel</option>
-                            <option value="Residential" {{ old('plot_type') === 'Residential' ? 'selected' : '' }}>Residential</option>
-                            <option value="Commercial" {{ old('plot_type') === 'Commercial' ? 'selected' : '' }}>Commercial</option>
+                            <option value="BUNGALOW PLOTS" {{ old('plot_type') === 'BUNGALOW PLOTS' ? 'selected' : '' }}>Bungalow Plots</option>
                         </select>
                     </div>
                     <!-- Area -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Area (Sq.Ft) <span class="text-red-500">*</span></label>
-                        <input type="number" name="area" value="{{ old('area') }}" step="0.01" min="0"
+                        <input type="number" name="area" value="{{ old('area') }}" step="any" min="0"
                             placeholder="e.g. 5035.46"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400" required />
                     </div>
                     <!-- FSI -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">FSI <span class="text-red-500">*</span></label>
-                        <input type="number" name="fsi" value="{{ old('fsi', '1.1') }}" step="0.1" min="0"
-                            placeholder="1.1"
+                        <input type="number" name="fsi" value="{{ old('fsi', '1.1') }}" step="any" min="0"
+                            placeholder="e.g.1.1"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400" required />
                     </div>
                     <!-- Permissible Area -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Permissible Area <span class="text-red-500">*</span></label>
-                        <input type="number" name="permissible_area" value="{{ old('permissible_area') }}" step="0.01" min="0"
+                        <input type="number" name="permissible_area" value="{{ old('permissible_area') }}" step="any" min="0"
                             placeholder="e.g. 5539.00"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400" required />
                     </div>
                     <!-- RL -->
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">RL (Reduced Level)</label>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">RL</label>
                         <input type="text" name="rl" value="{{ old('rl') }}"
                             placeholder="e.g. RL 150.5"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400" />
@@ -81,7 +80,6 @@
                             <option value="12MTR" {{ old('road') === '12MTR' ? 'selected' : '' }}>12 MTR</option>
                             <option value="15MTR" {{ old('road') === '15MTR' ? 'selected' : '' }}>15 MTR</option>
                             <option value="18MTR" {{ old('road') === '18MTR' ? 'selected' : '' }}>18 MTR</option>
-                            <option value="24MTR" {{ old('road') === '24MTR' ? 'selected' : '' }}>24 MTR</option>
                         </select>
                     </div>
                     <!-- Status -->
@@ -99,8 +97,7 @@
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Category <span class="text-red-500">*</span></label>
                         <select name="category" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400 bg-white" required>
                             <option value="PREMIUM" {{ old('category') === 'PREMIUM' ? 'selected' : '' }}>PREMIUM</option>
-                            <option value="STANDARD" {{ old('category') === 'STANDARD' ? 'selected' : '' }}>STANDARD</option>
-                            <option value="ECO" {{ old('category') === 'ECO' ? 'selected' : '' }}>ECO</option>
+                            <option value="ECONOMY" {{ old('category') === 'ECONOMY' ? 'selected' : '' }}>ECONOMY</option>
                         </select>
                     </div>
                 </div>
@@ -146,12 +143,12 @@
                             <div class="flex-1 flex items-center gap-2">
                                 <div class="flex-1">
                                     <label class="block text-xs text-gray-400 mb-0.5">X Coordinate</label>
-                                    <input type="number" name="points[0][x]" step="0.01" placeholder="X"
+                                    <input type="number" name="points[0][x]" step="any" placeholder="X"
                                         class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" oninput="updatePreview()" />
                                 </div>
                                 <div class="flex-1">
                                     <label class="block text-xs text-gray-400 mb-0.5">Y Coordinate</label>
-                                    <input type="number" name="points[0][y]" step="0.01" placeholder="Y"
+                                    <input type="number" name="points[0][y]" step="any" placeholder="Y"
                                         class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" oninput="updatePreview()" />
                                 </div>
                             </div>
@@ -202,7 +199,7 @@
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-500">FSI</span>
-                        <span id="summaryFsi" class="font-semibold text-gray-800">{{ old('fsi', '1.1') }}</span>
+                        <span id="summaryFsi" class="font-semibold text-gray-800">—</span>
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-500">Perm. Area</span>
@@ -214,16 +211,16 @@
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-500">Polygon Pts</span>
-                        <span id="summaryPoints" class="font-semibold text-gray-800">0</span>
+                        <span id="summaryPoints" class="font-semibold text-gray-800">—</span>
                     </div>
                     <hr class="border-gray-100" />
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-500">Status</span>
-                        <span id="summaryStatus" class="font-semibold text-green-600">Available</span>
+                        <span id="summaryStatus" class="font-semibold text-green-600">—</span>
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-500">Category</span>
-                        <span id="summaryCategory" class="font-semibold text-purple-600">PREMIUM</span>
+                        <span id="summaryCategory" class="font-semibold text-purple-600">—</span>
                     </div>
                 </div>
             </div>
@@ -275,13 +272,13 @@ function addPoint() {
         <div class="flex-1 flex items-center gap-2">
             <div class="flex-1">
                 <label class="block text-xs text-gray-400 mb-0.5">X Coordinate</label>
-                <input type="number" name="points[${pointIndex}][x]" step="0.01" placeholder="X"
+                <input type="number" name="points[${pointIndex}][x]" step="any" placeholder="X"
                     class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400"
                     oninput="updatePreview()" />
             </div>
             <div class="flex-1">
                 <label class="block text-xs text-gray-400 mb-0.5">Y Coordinate</label>
-                <input type="number" name="points[${pointIndex}][y]" step="0.01" placeholder="Y"
+                <input type="number" name="points[${pointIndex}][y]" step="any" placeholder="Y"
                     class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400"
                     oninput="updatePreview()" />
             </div>
@@ -332,7 +329,7 @@ document.addEventListener("input", function(e) {
     if (target.name === "area")       { 
         document.getElementById("summaryArea").textContent = target.value ? Number(target.value).toLocaleString() + " Sq.Ft" : "—"; 
     }
-    if (target.name === "fsi")        document.getElementById("summaryFsi").textContent = target.value || "1.1";
+    if (target.name === "fsi")        document.getElementById("summaryFsi").textContent = target.value || "—";
     if (target.name === "permissible_area") {
         document.getElementById("summaryPermArea").textContent = target.value ? Number(target.value).toLocaleString() + " Sq.Ft" : "—";
     }

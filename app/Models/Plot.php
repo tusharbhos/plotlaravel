@@ -104,8 +104,7 @@ class Plot extends Model
     {
         return match($this->category) {
             'PREMIUM'  => 'bg-purple-100 text-purple-800',
-            'STANDARD' => 'bg-blue-100 text-blue-800',
-            'ECO'      => 'bg-green-100 text-green-800',
+            'ECONOMY'      => 'bg-green-100 text-green-800',
             default    => 'bg-gray-100 text-gray-800',
         };
     }

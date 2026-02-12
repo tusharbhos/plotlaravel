@@ -2,12 +2,17 @@
 @section('title', 'Edit ' . $plot->plot_id)
 
 @section('content')
-@php $breadcrumbs = [['name' => 'Plots', 'url' => route('plots.index')], ['name' => 'Edit', 'url' => null], ['name' => $plot->plot_id, 'url' => null]]; @endphp
+@php
+$breadcrumbs = [['name' => 'Plots', 'url' => route('plots.index')], ['name' => 'Edit', 'url' => null], ['name' => $plot->plot_id, 'url' => null]];
+
+// Get the stored index URL with pagination and filters
+$backUrl = session('plot_index_url', route('plots.index'));
+@endphp
 
 <!-- ─── TOP BAR ─── -->
 <div class="flex items-center justify-between mb-5">
     <h2 class="text-lg font-bold text-gray-800">Edit Plot <span class="text-indigo-600">{{ $plot->plot_id }}</span></h2>
-    <a href="{{ route('plots.index') }}" class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 transition">
+    <a href="{{ $backUrl }}" class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 transition">
         <i class="fas fa-arrow-left text-xs"></i> Back
     </a>
 </div>
@@ -15,6 +20,9 @@
 <form method="POST" action="{{ route('plots.update', $plot->id) }}" enctype="multipart/form-data">
     @csrf
     @method('PUT')
+
+    <!-- Add hidden redirect field -->
+    <input type="hidden" name="redirect_url" value="{{ $backUrl }}">
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -37,23 +45,22 @@
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Plot Type *</label>
                         <select name="plot_type" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400 bg-white" required>
                             <option value="Land parcel" {{ old('plot_type', $plot->plot_type) === 'Land parcel' ? 'selected' : '' }}>Land Parcel</option>
-                            <option value="Residential" {{ old('plot_type', $plot->plot_type) === 'Residential' ? 'selected' : '' }}>Residential</option>
-                            <option value="Commercial" {{ old('plot_type', $plot->plot_type) === 'Commercial' ? 'selected' : '' }}>Commercial</option>
+                            <option value="BUNGALOW PLOTS" {{ old('plot_type', $plot->plot_type) === 'BUNGALOW PLOTS' ? 'selected' : '' }}>Bungalow Plots</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Area (Sq.Ft) *</label>
-                        <input type="number" name="area" value="{{ old('area', $plot->area) }}" step="0.01" min="0"
+                        <input type="number" name="area" value="{{ old('area', $plot->area) }}" step="any" min="0"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400" required />
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">FSI *</label>
-                        <input type="number" name="fsi" value="{{ old('fsi', $plot->fsi) }}" step="0.1" min="0"
+                        <input type="number" name="fsi" value="{{ old('fsi', $plot->fsi) }}" step="any" min="0"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400" required />
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Permissible Area *</label>
-                        <input type="number" name="permissible_area" value="{{ old('permissible_area', $plot->permissible_area) }}" step="0.01" min="0"
+                        <input type="number" name="permissible_area" value="{{ old('permissible_area', $plot->permissible_area) }}" step="any" min="0"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400" required />
                     </div>
                     <div>
@@ -64,7 +71,7 @@
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Road Width *</label>
                         <select name="road" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400 bg-white" required>
-                            <option value="">Select Road</option>
+                            <!-- <option value="">Select Road</option> -->
                             <option value="9MTR" {{ old('road', $plot->road) === '9MTR' ? 'selected' : '' }}>9 MTR</option>
                             <option value="12MTR" {{ old('road', $plot->road) === '12MTR' ? 'selected' : '' }}>12 MTR</option>
                             <option value="15MTR" {{ old('road', $plot->road) === '15MTR' ? 'selected' : '' }}>15 MTR</option>
@@ -84,8 +91,7 @@
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Category *</label>
                         <select name="category" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400 bg-white" required>
                             <option value="PREMIUM" {{ old('category', $plot->category) === 'PREMIUM' ? 'selected' : '' }}>PREMIUM</option>
-                            <option value="STANDARD" {{ old('category', $plot->category) === 'STANDARD' ? 'selected' : '' }}>STANDARD</option>
-                            <option value="ECO" {{ old('category', $plot->category) === 'ECO' ? 'selected' : '' }}>ECO</option>
+                            <option value="ECONOMY" {{ old('category', $plot->category) === 'ECONOMY' ? 'selected' : '' }}>ECONOMY</option>
                         </select>
                     </div>
                 </div>
@@ -125,12 +131,12 @@
                             <div class="flex-1 flex items-center gap-2">
                                 <div class="flex-1">
                                     <label class="block text-xs text-gray-400 mb-0.5">X</label>
-                                    <input type="number" name="points[{{ $i }}][x]" value="{{ $pt->x }}" step="0.01"
+                                    <input type="number" name="points[{{ $i }}][x]" value="{{ $pt->x }}" step="any"
                                         class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" oninput="updatePreview()" />
                                 </div>
                                 <div class="flex-1">
                                     <label class="block text-xs text-gray-400 mb-0.5">Y</label>
-                                    <input type="number" name="points[{{ $i }}][y]" value="{{ $pt->y }}" step="0.01"
+                                    <input type="number" name="points[{{ $i }}][y]" value="{{ $pt->y }}" step="any"
                                         class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" oninput="updatePreview()" />
                                 </div>
                             </div>
@@ -225,7 +231,13 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="bg-gray-900 text-white px-5 py-3 flex items-center justify-between">
                     <h3 class="font-bold text-sm">Plot Summary</h3>
-                    <span class="text-xs bg-{{ $plot->status === 'available' ? 'green' : ($plot->status === 'sold' ? 'red' : ($plot->status === 'booked' ? 'yellow' : 'gray')) }}-200 text-{{ $plot->status === 'available' ? 'green' : ($plot->status === 'sold' ? 'red' : ($plot->status === 'booked' ? 'yellow' : 'gray')) }}-700 px-2 py-0.5 rounded-full font-semibold">{{ ucfirst(str_replace('_',' ',$plot->status)) }}</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold 
+                        @if($plot->status === 'available') bg-green-200 text-green-700
+                        @elseif($plot->status === 'sold') bg-red-200 text-red-700
+                        @elseif($plot->status === 'booked') bg-yellow-200 text-yellow-700
+                        @else bg-gray-200 text-gray-700 @endif">
+                        {{ ucfirst(str_replace('_',' ',$plot->status)) }}
+                    </span>
                 </div>
                 <div class="p-5 space-y-3">
                     <div class="flex justify-between text-sm">
@@ -246,7 +258,7 @@
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-500">Road</span>
-                        <span class="font-semibold text-gray-800">{{ $plot->road }}</span>
+                        <span class="font-semibold text-gray-800">{{ $plot->road ?? 'Not specified' }}</span>
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-500">Category</span>
@@ -264,6 +276,12 @@
                         <span class="text-gray-500">Created</span>
                         <span class="font-semibold text-gray-600 text-xs">{{ $plot->created_at->diffForHumans() }}</span>
                     </div>
+                    @if($plot->deleted_at)
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Status</span>
+                        <span class="font-semibold text-red-600 text-xs">Trashed</span>
+                    </div>
+                    @endif
                 </div>
             </div>
 
@@ -277,7 +295,7 @@
                     <svg id="polygonPreview" viewBox="0 0 100 100" class="w-full max-w-xs border border-gray-100 rounded-lg bg-gray-50" style="max-height:200px;">
                         <defs>
                             <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#e5e7eb" stroke-width="0.3"/>
+                                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#e5e7eb" stroke-width="0.3" />
                             </pattern>
                         </defs>
                         <rect width="100" height="100" fill="url(#grid)" />
@@ -290,7 +308,7 @@
             <button type="submit" class="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition shadow-md hover:shadow-lg">
                 <i class="fas fa-save"></i> Update Plot
             </button>
-            <a href="{{ route('plots.index') }}" class="w-full flex items-center justify-center gap-2 text-gray-600 hover:text-gray-800 text-sm py-2 transition">
+            <a href="{{ $backUrl }}" class="w-full flex items-center justify-center gap-2 text-gray-600 hover:text-gray-800 text-sm py-2 transition">
                 <i class="fas fa-times text-xs"></i> Cancel
             </a>
         </div>
@@ -301,79 +319,104 @@
 
 @push('scripts')
 <script>
-let pointIndex = {{ $plot->points->count() }};
+    let pointIndex = {
+        {
+            $plot - > points - > count()
+        }
+    };
 
-function addPoint() {
-    const container = document.getElementById("pointsContainer");
-    const row = document.createElement("div");
-    row.className = "point-row flex items-center gap-3 bg-gray-50 rounded-lg p-3";
-    row.innerHTML = `
+    function addPoint() {
+        const container = document.getElementById("pointsContainer");
+        const row = document.createElement("div");
+        row.className = "point-row flex items-center gap-3 bg-gray-50 rounded-lg p-3";
+        row.innerHTML = `
         <div class="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-xs flex-shrink-0">${pointIndex + 1}</div>
         <div class="flex-1 flex items-center gap-2">
             <div class="flex-1">
                 <label class="block text-xs text-gray-400 mb-0.5">X</label>
-                <input type="number" name="points[${pointIndex}][x]" step="0.01" placeholder="X"
+                <input type="number" name="points[${pointIndex}][x]" step="any" placeholder="X"
                     class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" oninput="updatePreview()" />
             </div>
             <div class="flex-1">
                 <label class="block text-xs text-gray-400 mb-0.5">Y</label>
-                <input type="number" name="points[${pointIndex}][y]" step="0.01" placeholder="Y"
+                <input type="number" name="points[${pointIndex}][y]" step="any" placeholder="Y"
                     class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" oninput="updatePreview()" />
             </div>
         </div>
         <button type="button" class="text-gray-400 hover:text-red-500 transition" onclick="removePoint(this)">
             <i class="fas fa-times text-sm"></i>
         </button>`;
-    container.appendChild(row);
-    pointIndex++;
-    updatePointCount();
-}
+        container.appendChild(row);
+        pointIndex++;
+        updatePointCount();
+        updatePreview();
+    }
 
-function removePoint(btn) {
-    btn.closest(".point-row").remove();
-    rebuildPointNames();
-    updatePointCount();
-    updatePreview();
-}
+    function removePoint(btn) {
+        btn.closest(".point-row").remove();
+        rebuildPointNames();
+        updatePointCount();
+        updatePreview();
+    }
 
-function rebuildPointNames() {
-    const rows = document.querySelectorAll(".point-row");
-    rows.forEach((row, i) => {
-        const badge = row.querySelector(".rounded-full");
-        if (badge) badge.textContent = (i + 1);
-        const xInput = row.querySelector("input[name*=\"[x]\"]");
-        const yInput = row.querySelector("input[name*=\"[y]\"]");
-        if (xInput) xInput.setAttribute("name", "points[" + i + "][x]");
-        if (yInput) yInput.setAttribute("name", "points[" + i + "][y]");
+    function rebuildPointNames() {
+        const rows = document.querySelectorAll(".point-row");
+        rows.forEach((row, i) => {
+            const badge = row.querySelector(".rounded-full");
+            if (badge) badge.textContent = (i + 1);
+            const xInput = row.querySelector("input[name*=\"[x]\"]");
+            const yInput = row.querySelector("input[name*=\"[y]\"]");
+            if (xInput) xInput.setAttribute("name", "points[" + i + "][x]");
+            if (yInput) yInput.setAttribute("name", "points[" + i + "][y]");
+        });
+        pointIndex = rows.length;
+    }
+
+    function updatePointCount() {
+        const count = document.querySelectorAll(".point-row").length;
+        document.getElementById("pointCount").textContent = count + " points";
+    }
+
+    document.addEventListener("input", function(e) {
+        if (e.target.name && e.target.name.includes("points[")) {
+            updatePreview();
+        }
     });
-}
 
-function updatePointCount() {
-    const count = document.querySelectorAll(".point-row").length;
-    document.getElementById("pointCount").textContent = count + " points";
-}
+    function updatePreview() {
+        const rows = document.querySelectorAll(".point-row");
+        let points = [];
+        rows.forEach(row => {
+            const x = parseFloat(row.querySelector("input[name*=\"[x]\"]")?.value);
+            const y = parseFloat(row.querySelector("input[name*=\"[y]\"]")?.value);
+            if (!isNaN(x) && !isNaN(y)) points.push({
+                x,
+                y
+            });
+        });
 
-document.addEventListener("input", function(e) {
-    if (e.target.name.includes("points[")) updatePreview();
-});
+        if (points.length < 2) {
+            document.getElementById("previewPolygon").setAttribute("points", "");
+            return;
+        }
 
-function updatePreview() {
-    const rows = document.querySelectorAll(".point-row");
-    let points = [];
-    rows.forEach(row => {
-        const x = parseFloat(row.querySelector("input[name*=\"[x]\"]")?.value);
-        const y = parseFloat(row.querySelector("input[name*=\"[y]\"]")?.value);
-        if (!isNaN(x) && !isNaN(y)) points.push({x, y});
+        const minX = Math.min(...points.map(p => p.x));
+        const maxX = Math.max(...points.map(p => p.x));
+        const minY = Math.min(...points.map(p => p.y));
+        const maxY = Math.max(...points.map(p => p.y));
+
+        const scale = Math.min(80 / (maxX - minX || 1), 80 / (maxY - minY || 1));
+        const norm = points.map(p => ({
+            x: 10 + (p.x - minX) * scale,
+            y: 10 + (p.y - minY) * scale
+        }));
+
+        document.getElementById("previewPolygon").setAttribute("points", norm.map(p => p.x + "," + p.y).join(" "));
+    }
+
+    // Init preview on load
+    document.addEventListener('DOMContentLoaded', function() {
+        updatePreview();
     });
-    if (points.length < 2) { document.getElementById("previewPolygon").setAttribute("points", ""); return; }
-    const minX = Math.min(...points.map(p=>p.x)), maxX = Math.max(...points.map(p=>p.x));
-    const minY = Math.min(...points.map(p=>p.y)), maxY = Math.max(...points.map(p=>p.y));
-    const scale = Math.min(80/(maxX-minX||1), 80/(maxY-minY||1));
-    const norm = points.map(p => ({ x: 10+(p.x-minX)*scale, y: 10+(p.y-minY)*scale }));
-    document.getElementById("previewPolygon").setAttribute("points", norm.map(p=>p.x+","+p.y).join(" "));
-}
-
-// Init preview on load
-updatePreview();
 </script>
 @endpush

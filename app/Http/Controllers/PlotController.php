@@ -19,37 +19,38 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 class PlotController extends Controller
 {
     // ─────────────────────────────────────────────
-    // INDEX - List all plots
+    // INDEX - List all plots with pagination
     // ─────────────────────────────────────────────
     public function index()
     {
-        $plots = Plot::with('points', 'activeImages', 'primaryImage')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $query = Plot::with('points', 'activeImages', 'primaryImage');
 
-        // Filter params
-        $statusFilter = request('status', '');
-        $categoryFilter = request('category', '');
-        $searchQuery = request('search', '');
+        // Apply filters first
+        if ($statusFilter = request('status', '')) {
+            $query->where('status', $statusFilter);
+        }
+        if ($categoryFilter = request('category', '')) {
+            $query->where('category', $categoryFilter);
+        }
+        if ($searchQuery = request('search', '')) {
+            $query->where('plot_id', 'LIKE', "%{$searchQuery}%");
+        }
 
-        if ($statusFilter) {
-            $plots = $plots->filter(fn($p) => $p->status === $statusFilter);
+        // Natural sorting for MySQL
+        if (DB::connection()->getDriverName() === 'mysql') {
+            $query->orderByRaw('LENGTH(plot_id), plot_id');
+        } else {
+            $query->orderBy('plot_id');
         }
-        if ($categoryFilter) {
-            $plots = $plots->filter(fn($p) => $p->category === $categoryFilter);
-        }
-        if ($searchQuery) {
-            $plots = $plots->filter(
-                fn($p) =>
-                str_contains(strtolower($p->plot_id), strtolower($searchQuery))
-            );
-        }
+
+        // Add pagination - 10 items per page with query string persistence
+        $plots = $query->paginate(10)->withQueryString();
 
         return view('plots.index', [
             'plots' => $plots,
-            'statusFilter' => $statusFilter,
-            'categoryFilter' => $categoryFilter,
-            'searchQuery' => $searchQuery,
+            'statusFilter' => request('status', ''),
+            'categoryFilter' => request('category', ''),
+            'searchQuery' => request('search', ''),
         ]);
     }
 
@@ -58,6 +59,14 @@ class PlotController extends Controller
     // ─────────────────────────────────────────────
     public function create()
     {
+        // Store the previous URL for back button
+        if (
+            url()->previous() !== url()->current() &&
+            str_contains(url()->previous(), route('plots.index'))
+        ) {
+            session(['plot_index_url' => url()->previous()]);
+        }
+
         return view('plots.create');
     }
 
@@ -72,7 +81,7 @@ class PlotController extends Controller
             'fsi' => 'required|numeric|min:0',
             'permissible_area' => 'required|numeric|min:0',
             'status' => 'required|in:available,sold,under_review,booked',
-            'category' => 'required|in:PREMIUM,STANDARD,ECO',
+            'category' => 'required|in:PREMIUM,ECONOMY',
             'road' => 'required|string',
             'plot_type' => 'required|string',
         ]);
@@ -86,10 +95,11 @@ class PlotController extends Controller
         // Create Plot
         $plot = Plot::create([
             'plot_id' => $request->plot_id,
+            'plot_type' => $request->plot_type, // FIXED: Added missing field
             'area' => $request->area,
             'fsi' => $request->fsi,
             'permissible_area' => $request->permissible_area,
-            'rl' => $request->rl ?? '',
+            'rl' => $request->rl,
             'status' => $request->status,
             'road' => $request->road,
             'plot_type' => $request->plot_type,
@@ -106,7 +116,10 @@ class PlotController extends Controller
         // Save Images
         $this->saveImages($plot, $request);
 
-        return redirect()->route('plots.index')
+        // Get the stored index URL or fallback to index
+        $redirectUrl = session('plot_index_url', route('plots.index'));
+
+        return redirect($redirectUrl)
             ->with('success', 'Plot "' . $plot->plot_id . '" created successfully!');
     }
 
@@ -116,6 +129,15 @@ class PlotController extends Controller
     public function edit($id)
     {
         $plot = Plot::with('points', 'activeImages')->withTrashed()->findOrFail($id);
+
+        // Store the previous URL (plots index with pagination/filters)
+        if (
+            url()->previous() !== url()->current() &&
+            str_contains(url()->previous(), route('plots.index'))
+        ) {
+            session(['plot_index_url' => url()->previous()]);
+        }
+
         return view('plots.edit', compact('plot'));
     }
 
@@ -132,7 +154,7 @@ class PlotController extends Controller
             'fsi' => 'required|numeric|min:0',
             'permissible_area' => 'required|numeric|min:0',
             'status' => 'required|in:available,sold,under_review,booked',
-            'category' => 'required|in:PREMIUM,STANDARD,ECO',
+            'category' => 'required|in:PREMIUM,ECONOMY',
             'road' => 'required|string',
             'plot_type' => 'required|string',
         ]);
@@ -145,13 +167,13 @@ class PlotController extends Controller
 
         $plot->update([
             'plot_id' => $request->plot_id,
+            'plot_type' => $request->plot_type, // FIXED: Added missing field
             'area' => $request->area,
             'fsi' => $request->fsi,
             'permissible_area' => $request->permissible_area,
-            'rl' => $request->rl ?? '',
+            'rl' => $request->rl,
             'status' => $request->status,
             'road' => $request->road,
-            'plot_type' => $request->plot_type,
             'category' => $request->category,
             'corner' => $request->has('corner'),
             'garden' => $request->has('garden'),
@@ -166,36 +188,95 @@ class PlotController extends Controller
         // Save new images (keep existing, add new)
         $this->saveImages($plot, $request);
 
-        return redirect()->route('plots.index')
+        // Get the stored index URL or fallback to index
+        $redirectUrl = $request->input('redirect_url', session('plot_index_url', route('plots.index')));
+
+        return redirect($redirectUrl)
             ->with('success', 'Plot "' . $plot->plot_id . '" updated successfully!');
     }
 
     // ─────────────────────────────────────────────
-    // DELETE - Soft delete (move to trash)
+    // DELETE - Soft delete (move to trash) with redirect back
     // ─────────────────────────────────────────────
     public function destroy($id)
     {
         $plot = Plot::findOrFail($id);
         $plot->delete();
-        return redirect()->route('plots.index')
+
+        // Get the redirect URL from request or fallback to index with query string
+        $redirectUrl = request('redirect_url', url()->previous());
+
+        // Make sure we're redirecting to the index page with filters
+        if (!str_contains($redirectUrl, route('plots.index'))) {
+            $redirectUrl = session('plot_index_url', route('plots.index'));
+        }
+
+        return redirect($redirectUrl)
             ->with('success', 'Plot "' . $plot->plot_id . '" moved to trash.');
     }
 
     // ─────────────────────────────────────────────
     // MULTIPLE DELETE - Bulk soft delete
     // ─────────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // MULTIPLE DELETE - Bulk soft delete (Supports ALL pages)
+    // ─────────────────────────────────────────────
     public function multipleDelete(Request $request)
     {
-        $ids = $request->validate(['ids' => 'required|array'])['ids'];
         $count = 0;
-        foreach ($ids as $id) {
-            $plot = Plot::find($id);
-            if ($plot) {
+
+        // Check if "All" is selected
+        if ($request->input('all_selected') === 'true') {
+            // Get except_ids from request
+            $exceptIds = [];
+            if ($request->has('except_ids')) {
+                if (is_string($request->except_ids)) {
+                    // Handle comma-separated string
+                    $exceptIds = explode(',', $request->except_ids);
+                } else {
+                    // Handle array
+                    $exceptIds = $request->except_ids;
+                }
+            }
+
+            // Build query excluding specified IDs
+            $query = Plot::query();
+            if (!empty($exceptIds)) {
+                $query->whereNotIn('id', $exceptIds);
+            }
+
+            // Apply current filters
+            if ($statusFilter = $request->input('status', '')) {
+                $query->where('status', $statusFilter);
+            }
+            if ($categoryFilter = $request->input('category', '')) {
+                $query->where('category', $categoryFilter);
+            }
+            if ($searchQuery = $request->input('search', '')) {
+                $query->where('plot_id', 'LIKE', "%{$searchQuery}%");
+            }
+
+            $plots = $query->get();
+            foreach ($plots as $plot) {
                 $plot->delete();
                 $count++;
             }
+        } else {
+            // Delete only selected IDs from current page
+            $ids = $request->input('ids', []);
+            foreach ($ids as $id) {
+                $plot = Plot::find($id);
+                if ($plot) {
+                    $plot->delete();
+                    $count++;
+                }
+            }
         }
-        return redirect()->route('plots.index')
+
+        // Get the redirect URL from request or fallback to index with query string
+        $redirectUrl = $request->input('redirect_url', session('plot_index_url', route('plots.index')));
+
+        return redirect($redirectUrl)
             ->with('success', $count . ' plot(s) moved to trash.');
     }
 
@@ -207,7 +288,8 @@ class PlotController extends Controller
         $plots = Plot::onlyTrashed()
             ->with('points', 'activeImages')
             ->orderBy('deleted_at', 'desc')
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         return view('plots.trashed', compact('plots'));
     }
@@ -223,23 +305,7 @@ class PlotController extends Controller
             ->with('success', 'Plot "' . $plot->plot_id . '" restored successfully!');
     }
 
-    // ─────────────────────────────────────────────
-    // MULTIPLE RESTORE - Bulk restore
-    // ─────────────────────────────────────────────
-    public function multipleRestore(Request $request)
-    {
-        $ids = $request->validate(['ids' => 'required|array'])['ids'];
-        $count = 0;
-        foreach ($ids as $id) {
-            $plot = Plot::onlyTrashed()->find($id);
-            if ($plot) {
-                $plot->restore();
-                $count++;
-            }
-        }
-        return redirect()->route('plots.trashed')
-            ->with('success', $count . ' plot(s) restored successfully.');
-    }
+
 
     // ─────────────────────────────────────────────
     // FORCE DELETE - Permanently delete from trash
@@ -256,21 +322,101 @@ class PlotController extends Controller
     }
 
     // ─────────────────────────────────────────────
-    // MULTIPLE FORCE DELETE
+    // MULTIPLE RESTORE - Bulk restore (Supports ALL pages)
+    // ─────────────────────────────────────────────
+    public function multipleRestore(Request $request)
+    {
+        $count = 0;
+
+        // Check if "All" is selected
+        if ($request->input('all_selected') === 'true') {
+            // Get except_ids from request
+            $exceptIds = [];
+            if ($request->has('except_ids')) {
+                if (is_string($request->except_ids)) {
+                    // Handle comma-separated string
+                    $exceptIds = explode(',', $request->except_ids);
+                } else {
+                    // Handle array
+                    $exceptIds = $request->except_ids;
+                }
+            }
+
+            // Build query excluding specified IDs
+            $query = Plot::onlyTrashed();
+            if (!empty($exceptIds)) {
+                $query->whereNotIn('id', $exceptIds);
+            }
+
+            $plots = $query->get();
+            foreach ($plots as $plot) {
+                $plot->restore();
+                $count++;
+            }
+        } else {
+            // Restore only selected IDs
+            $ids = $request->validate(['ids' => 'required|array'])['ids'];
+            foreach ($ids as $id) {
+                $plot = Plot::onlyTrashed()->find($id);
+                if ($plot) {
+                    $plot->restore();
+                    $count++;
+                }
+            }
+        }
+
+        return redirect()->route('plots.trashed')
+            ->with('success', $count . ' plot(s) restored successfully.');
+    }
+
+    // ─────────────────────────────────────────────
+    // MULTIPLE FORCE DELETE (Supports ALL pages)
     // ─────────────────────────────────────────────
     public function multipleForceDelete(Request $request)
     {
-        $ids = $request->validate(['ids' => 'required|array'])['ids'];
         $count = 0;
-        foreach ($ids as $id) {
-            $plot = Plot::onlyTrashed()->find($id);
-            if ($plot) {
+
+        // Check if "All" is selected
+        if ($request->input('all_selected') === 'true') {
+            // Get except_ids from request
+            $exceptIds = [];
+            if ($request->has('except_ids')) {
+                if (is_string($request->except_ids)) {
+                    // Handle comma-separated string
+                    $exceptIds = explode(',', $request->except_ids);
+                } else {
+                    // Handle array
+                    $exceptIds = $request->except_ids;
+                }
+            }
+
+            // Build query excluding specified IDs
+            $query = Plot::onlyTrashed();
+            if (!empty($exceptIds)) {
+                $query->whereNotIn('id', $exceptIds);
+            }
+
+            $plots = $query->get();
+            foreach ($plots as $plot) {
                 $plot->points()->delete();
                 $plot->images()->delete();
                 $plot->forceDelete();
                 $count++;
             }
+        } else {
+            // Delete only selected IDs
+            $ids = $request->validate(['ids' => 'required|array'])['ids'];
+            foreach ($ids as $id) {
+                $plot = Plot::onlyTrashed()->find($id);
+                if ($plot) {
+                    $plot->points()->delete();
+                    $plot->images()->delete();
+                    $plot->forceDelete();
+                    $count++;
+                }
+            }
         }
+
         return redirect()->route('plots.trashed')
             ->with('success', $count . ' plot(s) permanently deleted.');
     }
@@ -290,7 +436,7 @@ class PlotController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator);
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         $isFirst = $plot->activeImages()->count() === 0;
@@ -318,7 +464,7 @@ class PlotController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator);
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         $path = $request->file('image_file')->store('plots', 'public');
@@ -553,7 +699,7 @@ class PlotController extends Controller
                 ->with('error', 'Import failed: ' . $e->getMessage());
         }
     }
-    // PlotController.php मध्ये
+
     /**
      * Show import form
      */
@@ -561,6 +707,7 @@ class PlotController extends Controller
     {
         return view('plots.import');
     }
+    
     // ─────────────────────────────────────────────
     // EXCEL IMPORT
     // ─────────────────────────────────────────────
@@ -678,81 +825,71 @@ class PlotController extends Controller
                     $yRaw               // 13 
                 ] = array_pad($row, 14, null);
 
-                if (!$plotCode) {
-                    throw new \Exception('Plot ID is required');
+
+                $plotCode = trim($plotCode);
+
+                // 🔴 Plot ID mandatory
+                if (!$plotCode || $plotCode === '') {
+                    $errorRows[] = 'Plot ID is required.';
+                    return; // skip this row
                 }
 
-                // Normalize numeric values (remove commas)
-                $areaValue = $this->normalizeNumber($area);
-                $fsiValue = $this->normalizeNumber($fsi);
-                $permissibleAreaValue = $this->normalizeNumber($permissibleArea);
-
-                if ($areaValue !== null && $areaValue <= 0) {
-                    throw new \Exception("Invalid area for Plot ID {$plotCode}");
+                // ❌ Only numeric allowed
+                if (!ctype_digit($plotCode)) {
+                    $errorRows[] = 'Invalid Plot ID: ' . $plotCode;
+                    return; // skip this row and continue next
                 }
 
-                if ($fsiValue !== null && $fsiValue <= 0) {
-                    throw new \Exception("Invalid FSI for Plot ID {$plotCode}");
-                }
-
-                if ($permissibleAreaValue !== null && $permissibleAreaValue < 0) {
-                    throw new \Exception("Invalid permissible area for Plot ID {$plotCode}");
-                }
-
-                // Check duplicate
+                // 🔁 Duplicate check
                 $existingPlot = Plot::where('plot_id', trim($plotCode))->first();
                 if ($existingPlot) {
                     $duplicateCount++;
                     return;
                 }
 
-                // Create Plot
+                // 🟢 Create Plot (NO default values)
                 $plot = Plot::create([
                     'plot_id'          => trim($plotCode),
-                    'plot_type'        => $plotType ?? 'Land parcel',
-                    'area'             => $areaValue ?? 0,
-                    'fsi'              => $fsiValue ?? 1.1,
-                    'permissible_area' => $permissibleAreaValue ?? 0,
+                    'plot_type'        => $plotType,
+                    'area'             => $this->normalizeNumber($area),
+                    'fsi'              => $this->normalizeNumber($fsi),
+                    'permissible_area' => $this->normalizeNumber($permissibleArea),
                     'rl'               => $rl,
-                    'road'             => $road ?? '12MTR',
-                    'status'           => $status ?? 'available',
-                    'category'         => $category ?? 'STANDARD',
-                    'corner'           => strtolower($corner ?? '') === 'yes',
-                    'garden'           => strtolower($garden ?? '') === 'yes',
+                    'road'             => $road,
+                    'status'           => $status,
+                    'category'         => $category,
+                    'corner'           => strtolower(trim($corner)) === 'yes',
+                    'garden'           => strtolower(trim($garden)) === 'yes',
                     'notes'            => $notes,
                 ]);
 
-                // Save polygon points
+                // 🟡 Polygon Points Save (Even if dash or blank skip silently)
                 if ($xRaw !== null && $yRaw !== null && trim($xRaw) !== '' && trim($yRaw) !== '') {
 
                     $xValues = array_map('trim', explode(';', $xRaw));
                     $yValues = array_map('trim', explode(';', $yRaw));
 
-                    if (count($xValues) !== count($yValues)) {
-                        throw new \Exception(
-                            "X and Y coordinate count mismatch for Plot ID {$plotCode}"
-                        );
-                    }
+                    if (count($xValues) === count($yValues)) {
 
-                    foreach ($xValues as $i => $x) {
+                        foreach ($xValues as $i => $x) {
 
-                        $y = $yValues[$i];
+                            $y = $yValues[$i];
 
-                        $xVal = $this->normalizeNumber($x);
-                        $yVal = $this->normalizeNumber($y);
+                            $xVal = $this->normalizeNumber($x);
+                            $yVal = $this->normalizeNumber($y);
 
-                        if ($xVal === null || $yVal === null) {
-                            throw new \Exception(
-                                "Invalid coordinate value for Plot ID {$plotCode}"
-                            );
+                            // skip invalid coordinate but DO NOT break insert
+                            if ($xVal === null || $yVal === null) {
+                                continue;
+                            }
+
+                            PlotPoint::create([
+                                'plot_id'    => $plot->id,
+                                'x'          => $xVal,
+                                'y'          => $yVal,
+                                'sort_order' => $i,
+                            ]);
                         }
-
-                        PlotPoint::create([
-                            'plot_id'    => $plot->id,
-                            'x'          => $xVal,
-                            'y'          => $yVal,
-                            'sort_order' => $i,
-                        ]);
                     }
                 }
 
@@ -763,20 +900,26 @@ class PlotController extends Controller
         }
     }
 
-/**
- * Remove comma separators and return numeric value
- */
-private function normalizeNumber($value)
-{
-    if ($value === null || $value === '') {
-        return null;
+    /**
+     * Remove comma separators and return numeric value
+     */
+    private function normalizeNumber($value)
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim($value);
+
+        // Treat dash, underscore, empty as null
+        if ($value === '' || $value === '-' || $value === '_') {
+            return null;
+        }
+
+        $value = str_replace(',', '', $value);
+
+        return is_numeric($value) ? (float) $value : null;
     }
-
-    // Remove commas (34,444 -> 34444)
-    $value = str_replace(',', '', $value);
-
-    return is_numeric($value) ? (float) $value : null;
-}
 
     // ─────────────────────────────────────────────
     // HELPERS
@@ -786,7 +929,7 @@ private function normalizeNumber($value)
     {
         if (isset($request->points) && is_array($request->points)) {
             foreach ($request->points as $index => $point) {
-                if (isset($point['x']) && isset($point['y'])) {
+                if (isset($point['x']) && isset($point['y']) && $point['x'] !== '' && $point['y'] !== '') {
                     PlotPoint::create([
                         'plot_id' => $plot->id,
                         'x' => (float) $point['x'],

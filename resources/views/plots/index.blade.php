@@ -9,11 +9,18 @@
     <!-- Left: Title + Bulk Actions -->
     <div class="flex items-center gap-3 flex-wrap">
         <h2 class="text-lg font-bold text-gray-800">All Plots</h2>
-        <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-0.5 rounded-full">{{ $plots->count() }} plots</span>
+        <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-0.5 rounded-full">{{ $plots->total() }} plots</span>
 
-        <!-- Bulk Delete Button (hidden until selection) -->
+        <!-- Bulk Actions (hidden until selection) -->
         <div id="bulkActions" class="hidden items-center gap-2">
             <span id="selectedCount" class="text-xs text-gray-500 font-semibold">0 selected</span>
+
+            <!-- Select All Across Pages Option -->
+            <div class="flex items-center gap-2 ml-2 pl-2 border-l border-gray-200">
+                <input type="checkbox" id="selectAllAcrossPages" class="rounded text-indigo-600" onchange="toggleSelectAllAcrossPages(this)">
+                <label for="selectAllAcrossPages" class="text-xs text-gray-600">Select all {{ $plots->total() }} plots</label>
+            </div>
+
             <button onclick="bulkDelete()" class="flex items-center gap-1 text-xs font-semibold text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg transition">
                 <i class="fas fa-trash-alt"></i> Delete Selected
             </button>
@@ -34,6 +41,10 @@
         <!-- Add Plot -->
         <a href="{{ route('plots.create') }}" class="flex items-center gap-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition shadow-sm">
             <i class="fas fa-plus"></i> Add Plot
+        </a>
+        <!-- Trash -->
+        <a href="{{ route('plots.trashed') }}" class="flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 hover:bg-gray-100 px-3 py-2 rounded-lg transition">
+            <i class="fas fa-trash"></i> Trash
         </a>
     </div>
 </div>
@@ -67,8 +78,7 @@
             <select name="category" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400 bg-white">
                 <option value="" {{ $categoryFilter === '' ? 'selected' : '' }}>All Category</option>
                 <option value="PREMIUM" {{ $categoryFilter === 'PREMIUM' ? 'selected' : '' }}>PREMIUM</option>
-                <option value="STANDARD" {{ $categoryFilter === 'STANDARD' ? 'selected' : '' }}>STANDARD</option>
-                <option value="ECO" {{ $categoryFilter === 'ECO' ? 'selected' : '' }}>ECO</option>
+                <option value="ECONOMY" {{ $categoryFilter === 'ECONOMY' ? 'selected' : '' }}>ECONOMY</option>
             </select>
         </div>
         <!-- Search Button -->
@@ -83,6 +93,19 @@
         @endif
     </form>
 </div>
+
+<!-- ─── HIDDEN FORM for Bulk Delete (Supports ALL Pages) ─── -->
+<form id="bulkDeleteForm" method="POST" action="{{ route('plots.multipleDelete') }}" class="hidden">
+    @csrf
+    <input type="hidden" name="all_selected" id="allSelectedInput" value="false">
+    <input type="hidden" name="except_ids" id="exceptIdsInput" value="">
+    <input type="hidden" name="redirect_url" value="{{ url()->full() }}">
+
+    <!-- Store current filters for all-pages deletion -->
+    <input type="hidden" name="status" value="{{ request('status', '') }}">
+    <input type="hidden" name="category" value="{{ request('category', '') }}">
+    <input type="hidden" name="search" value="{{ request('search', '') }}">
+</form>
 
 <!-- ─── PLOTS TABLE ─── -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -116,11 +139,11 @@
                     <!-- Image -->
                     <td class="px-4 py-3">
                         @if($plot->primaryImage)
-                            <img src="{{ $plot->primaryImage->getImageUrl() }}" alt="{{ $plot->plot_id }}" class="w-10 h-10 rounded-lg object-cover border border-gray-200" onerror="this.src=''" />
+                        <img src="{{ Storage::url($plot->primaryImage->image_path) }}" alt="{{ $plot->plot_id }}" class="w-10 h-10 rounded-lg object-cover border border-gray-200" onerror="this.src='{{ asset('images/no-image.png') }}'" />
                         @else
-                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-image text-gray-400 text-sm"></i>
-                            </div>
+                        <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-image text-gray-400 text-sm"></i>
+                        </div>
                         @endif
                     </td>
                     <!-- Plot ID -->
@@ -133,20 +156,32 @@
                     <td class="px-4 py-3 text-gray-600">{{ number_format($plot->permissible_area, 2) }}</td>
                     <!-- Category -->
                     <td class="px-4 py-3">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold {{ $plot->getCategoryColor() }}">{{ $plot->category }}</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold 
+                            {{ $plot->category == 'PREMIUM' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700' }}">
+                            {{ $plot->category }}
+                        </span>
                     </td>
                     <!-- Status -->
                     <td class="px-4 py-3">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold {{ $plot->getStatusColor() }}">{{ ucfirst(str_replace('_', ' ', $plot->status)) }}</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold
+                            @if($plot->status == 'available') bg-green-100 text-green-700
+                            @elseif($plot->status == 'sold') bg-red-100 text-red-700
+                            @elseif($plot->status == 'booked') bg-blue-100 text-blue-700
+                            @else bg-yellow-100 text-yellow-700
+                            @endif">
+                            {{ ucfirst(str_replace('_', ' ', $plot->status)) }}
+                        </span>
                     </td>
                     <!-- Road -->
                     <td class="px-4 py-3 text-gray-600 text-sm">{{ $plot->road }}</td>
                     <!-- Corner -->
                     <td class="px-4 py-3">
                         @if($plot->corner)
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-teal-100 text-teal-700"><i class="fas fa-check mr-1 text-xs"></i>Yes</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-teal-100 text-teal-700">
+                            <i class="fas fa-check mr-1 text-xs"></i>Yes
+                        </span>
                         @else
-                            <span class="text-gray-400 text-xs">No</span>
+                        <span class="text-gray-400 text-xs">No</span>
                         @endif
                     </td>
                     <!-- Points Count -->
@@ -184,85 +219,298 @@
     </div>
 </div>
 
-<!-- ─── HIDDEN FORM for Bulk Delete ─── -->
-<form id="bulkDeleteForm" method="POST" action="{{ route('plots.multipleDelete') }}" class="hidden">
-    @csrf
-    <!-- IDs will be injected via JS -->
-</form>
+<!-- ─── PAGINATION ─── -->
+@if($plots->hasPages())
+<div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-4">
+    <div class="text-sm text-gray-500">
+        Showing <span class="font-medium">{{ $plots->firstItem() }}</span> to <span class="font-medium">{{ $plots->lastItem() }}</span> of <span class="font-medium">{{ $plots->total() }}</span> plots
+    </div>
+
+    <div class="flex items-center gap-1">
+        {{-- Previous Page Link --}}
+        @if ($plots->onFirstPage())
+        <span class="px-3 py-1.5 text-sm text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed">
+            <i class="fas fa-chevron-left text-xs"></i>
+        </span>
+        @else
+        <a href="{{ $plots->previousPageUrl() }}" class="px-3 py-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition">
+            <i class="fas fa-chevron-left text-xs"></i>
+        </a>
+        @endif
+
+        {{-- Pagination Elements --}}
+        @foreach ($plots->getUrlRange(1, $plots->lastPage()) as $page => $url)
+        @if ($page == $plots->currentPage())
+        <span class="px-3 py-1.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg">{{ $page }}</span>
+        @elseif ($page === 1 || $page === $plots->lastPage() || ($page >= $plots->currentPage() - 2 && $page <= $plots->currentPage() + 2))
+            <a href="{{ $url }}" class="px-3 py-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition">{{ $page }}</a>
+            @elseif ($page === $plots->currentPage() - 3 || $page === $plots->currentPage() + 3)
+            <span class="px-3 py-1.5 text-sm text-gray-400">...</span>
+            @endif
+            @endforeach
+
+            {{-- Next Page Link --}}
+            @if ($plots->hasMorePages())
+            <a href="{{ $plots->nextPageUrl() }}" class="px-3 py-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition">
+                <i class="fas fa-chevron-right text-xs"></i>
+            </a>
+            @else
+            <span class="px-3 py-1.5 text-sm text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed">
+                <i class="fas fa-chevron-right text-xs"></i>
+            </span>
+            @endif
+    </div>
+</div>
+@endif
 
 @endsection
 
 @push('scripts')
 <script>
-// ─── Select All ───
-function selectAllPlots(master) {
-    document.querySelectorAll('.plot-checkbox').forEach(cb => cb.checked = master.checked);
-    updateBulkActions();
-}
+    // Store selected IDs across pagination
+    let selectedIds = new Set();
+    let isAllAcrossPages = false;
 
-// ─── Update bulk actions bar ───
-function updateBulkActions() {
-    const checked = document.querySelectorAll('.plot-checkbox:checked');
-    const bar = document.getElementById('bulkActions');
-    const countEl = document.getElementById('selectedCount');
+    // Initialize from localStorage if exists
+    document.addEventListener('DOMContentLoaded', function() {
+        const stored = localStorage.getItem('plot_selected_ids');
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                selectedIds = new Set(parsed);
 
-    if (checked.length > 0) {
-        bar.classList.remove('hidden');
-        bar.classList.add('flex');
-        countEl.textContent = checked.length + ' selected';
-    } else {
-        bar.classList.add('hidden');
-        bar.classList.remove('flex');
+                // Check checkboxes based on stored IDs
+                document.querySelectorAll('.plot-checkbox').forEach(cb => {
+                    if (selectedIds.has(cb.value)) {
+                        cb.checked = true;
+                    }
+                });
+
+                updateBulkActions();
+            } catch (e) {
+                console.error('Error loading stored selections', e);
+            }
+        }
+
+        // Check if "Select All Across Pages" was previously selected
+        const storedAllAcross = localStorage.getItem('plot_select_all_across');
+        if (storedAllAcross === 'true') {
+            isAllAcrossPages = true;
+            const selectAllAcross = document.getElementById('selectAllAcrossPages');
+            if (selectAllAcross) {
+                selectAllAcross.checked = true;
+            }
+        }
+    });
+
+    // ─── Select All on Current Page ───
+    function selectAllPlots(master) {
+        document.querySelectorAll('.plot-checkbox').forEach(cb => {
+            cb.checked = master.checked;
+            const id = cb.value;
+            if (master.checked) {
+                selectedIds.add(id);
+            } else {
+                selectedIds.delete(id);
+            }
+        });
+
+        // If unchecking master, also uncheck "Select All Across Pages"
+        if (!master.checked) {
+            isAllAcrossPages = false;
+            const selectAllAcross = document.getElementById('selectAllAcrossPages');
+            if (selectAllAcross) {
+                selectAllAcross.checked = false;
+            }
+            localStorage.setItem('plot_select_all_across', 'false');
+        }
+
+        saveSelection();
+        updateBulkActions();
     }
 
-    const all = document.querySelectorAll('.plot-checkbox');
-    document.getElementById('selectAll').checked =
-        checked.length === all.length && all.length > 0;
-}
+    // ─── Toggle Select All Across Pages ───
+    function toggleSelectAllAcrossPages(checkbox) {
+        isAllAcrossPages = checkbox.checked;
+        localStorage.setItem('plot_select_all_across', checkbox.checked ? 'true' : 'false');
 
-// ─── Clear Selection ───
-function clearSelection() {
-    document.querySelectorAll('.plot-checkbox').forEach(cb => cb.checked = false);
-    document.getElementById('selectAll').checked = false;
-    updateBulkActions();
-}
+        if (checkbox.checked) {
+            // When selecting all across pages, check all visible checkboxes
+            document.querySelectorAll('.plot-checkbox').forEach(cb => {
+                cb.checked = true;
+                selectedIds.add(cb.value);
+            });
+            document.getElementById('selectAll').checked = true;
+        } else {
+            // When unchecking, clear everything
+            clearSelection();
+        }
 
-// ─── Single Delete Confirm ───
-function confirmDelete(id, name) {
-    showConfirmModal(
-        "Move to Trash",
-        `Are you sure you want to move "${name}" to trash? You can restore it later.`,
-        function () {
-            const form = document.createElement("form");
-            form.method = "POST";
-            form.action = "{{ route('plots.destroy', '__ID__') }}".replace("__ID__", id);
-            form.innerHTML = `
-                <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="_method" value="DELETE">
-            `;
-            document.body.appendChild(form);
-            form.submit();
-        },
-        "Move to Trash",
-        "bg-red-500 hover:bg-red-600"
-    );
-}
+        saveSelection();
+        updateBulkActions();
+    }
 
-// ─── Bulk Delete ───
-function bulkDelete() {
-    const checked = document.querySelectorAll(".plot-checkbox:checked");
-    const ids = Array.from(checked).map(cb => cb.value);
+    // ─── Update bulk actions bar ───
+    function updateBulkActions() {
+        const checked = document.querySelectorAll('.plot-checkbox:checked');
+        const bar = document.getElementById('bulkActions');
+        const countEl = document.getElementById('selectedCount');
 
-    if (!ids.length) return;
+        // Update selectedIds set based on current page checkboxes
+        document.querySelectorAll('.plot-checkbox').forEach(cb => {
+            const id = cb.value;
+            if (cb.checked) {
+                selectedIds.add(id);
+            } else {
+                if (selectedIds.has(id)) {
+                    selectedIds.delete(id);
+                }
+            }
+        });
 
-    showConfirmModal(
-        "Bulk Delete",
-        `Move ${ids.length} plot(s) to trash? You can restore them later.`,
-        function () {
-            const form = document.getElementById("bulkDeleteForm");
-            form.querySelectorAll(".id-input").forEach(el => el.remove());
+        // Show bulk actions bar if any are selected
+        if (selectedIds.size > 0 || isAllAcrossPages) {
+            bar.classList.remove('hidden');
+            bar.classList.add('flex');
 
-            ids.forEach(id => {
+            if (isAllAcrossPages) {
+                countEl.textContent = 'All {{ $plots->total() }} plots selected';
+            } else {
+                countEl.textContent = selectedIds.size + ' selected';
+            }
+        } else {
+            bar.classList.add('hidden');
+            bar.classList.remove('flex');
+        }
+
+        // Update select all checkbox state for current page
+        const all = document.querySelectorAll('.plot-checkbox');
+        const allChecked = all.length > 0 && Array.from(all).every(cb => cb.checked);
+        document.getElementById('selectAll').checked = allChecked;
+
+        saveSelection();
+    }
+
+    // ─── Save selection to localStorage ───
+    function saveSelection() {
+        localStorage.setItem('plot_selected_ids', JSON.stringify(Array.from(selectedIds)));
+    }
+
+    // ─── Clear Selection ───
+    function clearSelection() {
+        document.querySelectorAll('.plot-checkbox').forEach(cb => cb.checked = false);
+        selectedIds.clear();
+        isAllAcrossPages = false;
+
+        const selectAllAcross = document.getElementById('selectAllAcrossPages');
+        if (selectAllAcross) {
+            selectAllAcross.checked = false;
+        }
+
+        document.getElementById('selectAll').checked = false;
+
+        localStorage.removeItem('plot_selected_ids');
+        localStorage.setItem('plot_select_all_across', 'false');
+
+        updateBulkActions();
+    }
+
+    // ─── Single Delete Confirm ───
+    function confirmDelete(id, name) {
+        if (typeof showConfirmModal === 'function') {
+            showConfirmModal(
+                "Move to Trash",
+                `Are you sure you want to move "${name}" to trash? You can restore it later.`,
+                function() {
+                    const form = document.createElement("form");
+                    form.method = "POST";
+                    form.action = "{{ route('plots.destroy', '__ID__') }}".replace("__ID__", id);
+                    form.innerHTML = `
+                        <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <input type="hidden" name="redirect_url" value="{{ url()->full() }}">
+                    `;
+                    document.body.appendChild(form);
+                    form.submit();
+                },
+                "Move to Trash",
+                "bg-red-500 hover:bg-red-600"
+            );
+        } else {
+            if (confirm(`Are you sure you want to move "${name}" to trash?`)) {
+                const form = document.createElement("form");
+                form.method = "POST";
+                form.action = "{{ route('plots.destroy', '__ID__') }}".replace("__ID__", id);
+                form.innerHTML = `
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <input type="hidden" name="redirect_url" value="{{ url()->full() }}">
+                `;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    }
+
+    // ─── Bulk Delete with support for ALL pages ───
+    function bulkDelete() {
+        if (selectedIds.size === 0 && !isAllAcrossPages) return;
+
+        let message;
+        if (isAllAcrossPages) {
+            message = `Move ALL {{ $plots->total() }} plots across all pages to trash?`;
+        } else {
+            message = `Move ${selectedIds.size} plot(s) to trash?`;
+        }
+
+        if (typeof showConfirmModal === 'function') {
+            showConfirmModal(
+                "Bulk Delete",
+                message,
+                function() {
+                    executeBulkDelete();
+                },
+                "Delete",
+                "bg-red-500 hover:bg-red-600"
+            );
+        } else {
+            if (confirm(message)) {
+                executeBulkDelete();
+            }
+        }
+    }
+
+    function executeBulkDelete() {
+        const form = document.getElementById("bulkDeleteForm");
+
+        // Remove existing dynamic inputs
+        form.querySelectorAll(".id-input, .except-id-input").forEach(el => el.remove());
+
+        if (isAllAcrossPages) {
+            // Select ALL across pages
+            document.getElementById('allSelectedInput').value = 'true';
+
+            // Get IDs that are NOT selected (to exclude them)
+            const allVisibleIds = Array.from(document.querySelectorAll('.plot-checkbox')).map(cb => cb.value);
+            const exceptIds = allVisibleIds.filter(id => !selectedIds.has(id));
+
+            document.getElementById('exceptIdsInput').value = exceptIds.join(',');
+
+            // Add individual except IDs
+            exceptIds.forEach(id => {
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = "except_ids[]";
+                input.value = id;
+                input.classList.add("except-id-input");
+                form.appendChild(input);
+            });
+        } else {
+            // Normal selection - add individual IDs
+            document.getElementById('allSelectedInput').value = 'false';
+            document.getElementById('exceptIdsInput').value = '';
+
+            Array.from(selectedIds).forEach(id => {
                 const input = document.createElement("input");
                 input.type = "hidden";
                 input.name = "ids[]";
@@ -270,12 +518,20 @@ function bulkDelete() {
                 input.classList.add("id-input");
                 form.appendChild(input);
             });
+        }
 
-            form.submit();
-        },
-        `Delete ${ids.length} Plot(s)`,
-        "bg-red-500 hover:bg-red-600"
-    );
-}
+        form.submit();
+
+        // Clear selection after submission
+        setTimeout(() => {
+            localStorage.removeItem('plot_selected_ids');
+            localStorage.removeItem('plot_select_all_across');
+        }, 100);
+    }
+
+    // ─── Initialize on page load ───
+    document.addEventListener('DOMContentLoaded', function() {
+        updateBulkActions();
+    });
 </script>
 @endpush
