@@ -71,11 +71,13 @@ $backUrl = session('plot_index_url', route('plots.index'));
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Road Width *</label>
                         <select name="road" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400 bg-white" required>
-                            <!-- <option value="">Select Road</option> -->
-                            <option value="9MTR" {{ old('road', $plot->road) === '9MTR' ? 'selected' : '' }}>9 MTR</option>
-                            <option value="12MTR" {{ old('road', $plot->road) === '12MTR' ? 'selected' : '' }}>12 MTR</option>
-                            <option value="15MTR" {{ old('road', $plot->road) === '15MTR' ? 'selected' : '' }}>15 MTR</option>
-                            <option value="18MTR" {{ old('road', $plot->road) === '18MTR' ? 'selected' : '' }}>18 MTR</option>
+                            @php
+                            $currentRoad = old('road', trim($plot->road ?? ''));
+                            @endphp
+                            <option value="9MTR" {{ $currentRoad == '9MTR' ? 'selected' : '' }}>9 MTR</option>
+                            <option value="12MTR" {{ $currentRoad == '12MTR' ? 'selected' : '' }}>12 MTR</option>
+                            <option value="15MTR" {{ $currentRoad == '15MTR' ? 'selected' : '' }}>15 MTR</option>
+                            <option value="18MTR" {{ $currentRoad == '18MTR' ? 'selected' : '' }}>18 MTR</option>
                         </select>
                     </div>
                     <div>

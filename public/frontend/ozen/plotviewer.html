@@ -1,0 +1,1868 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Plot Layout</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'halvita', Arial, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+        }
+
+        #side-panel {
+            position: fixed;
+            top: 0;
+            left: -400px;
+            width: 380px;
+            height: 80vh;
+            background: white;
+            box-shadow: 5px 0 20px rgba(0, 0, 0, 0.2);
+            z-index: 2000;
+            transition: left 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #side-panel.active {
+            left: 0;
+        }
+
+        .side-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .side-panel-header h3 {
+            color: #333;
+            font-size: 1.6rem;
+            margin: 0;
+        }
+
+        .close-side-panel {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.3s;
+            padding: 0px;
+            box-shadow: none;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .close-side-panel:hover {
+            color: #ff4757;
+        }
+
+        .side-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .side-section:last-child {
+            border-bottom: none;
+        }
+
+        .side-section h4 {
+            color: #555;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .side-section h4 .icon {
+            font-size: 1.3rem;
+        }
+
+        .option-group {
+            margin: 12px 0;
+        }
+
+        .option-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+            font-size: 1rem;
+        }
+
+        .option-group select,
+        .option-group input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            transition: border 0.3s;
+        }
+
+        .option-group select:focus,
+        .option-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        /* CONFIGURE PLOT BUTTON */
+        #side-panel-toggle-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        #side-panel-toggle {
+            padding: 12px 20px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+            -webkit-appearance: none;
+            appearance: none;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        #side-panel-toggle:hover {
+            background: #ff4757;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.6);
+        }
+
+        #containerslide21 {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+            cursor: grab;
+
+            background-image: url("./img/Background.jpg");
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: cover;
+            /* ⭐ KEY FIX */
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            touch-action: none;
+            user-select: none;
+        }
+
+        #containerslide21:active {
+            cursor: grabbing;
+        }
+
+        #imageWrapper {
+            position: relative;
+            display: inline-block;
+            transform-origin: 0 0;
+            transition: transform 0.1s ease-out;
+            -webkit-transform-style: preserve-3d;
+            transform-style: preserve-3d;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            -webkit-perspective: 1000;
+            perspective: 1000;
+            box-shadow: #000000 0px 10px 30px -5px;
+        }
+
+        #plotImage {
+            display: block;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            -webkit-touch-callout: none;
+            pointer-events: none;
+            max-width: 95vw;
+            max-height: 85vh;
+            height: auto;
+            width: auto;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+        }
+
+        .plot-marker {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3px;
+            font-weight: bold;
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .plot-marker * {
+            pointer-events: none;
+        }
+
+        .plot-polygon {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .plot-marker:hover .plot-polygon {
+            filter: brightness(1.2);
+        }
+
+        .plot-number {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+
+        .plot-marker.highlighted {
+            z-index: 20;
+            animation: pulse 1.5s infinite;
+        }
+
+        .plot-marker.highlighted .plot-polygon {
+            filter: brightness(1.3);
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* PLOT STATUS COLORS */
+        .plot-marker.sold .plot-polygon {
+            background: rgba(220, 53, 69, 0.7);
+            border-color: #dc3545;
+        }
+
+        .plot-marker.sold:hover .plot-polygon {
+            background: #dc3545;
+        }
+
+        .plot-marker.available .plot-polygon {
+            background: rgba(40, 167, 69, 0.7);
+            border-color: #28a745;
+        }
+
+        .plot-marker.available:hover .plot-polygon {
+            background: #28a745;
+        }
+
+        .plot-marker.booked .plot-polygon {
+            background: rgba(255, 193, 7, 0.7);
+            border-color: #ffc107;
+        }
+
+        .plot-marker.booked:hover .plot-polygon {
+            background: #ffc107;
+        }
+
+        .plot-marker.under_review .plot-polygon {
+            background: rgba(108, 117, 125, 0.7);
+            border-color: #6c757d;
+        }
+
+        .plot-marker.under_review:hover .plot-polygon {
+            background: #6c757d;
+        }
+
+        .plot-marker.filtered-out {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        /* PLOT DETAILS popupplot */
+        .popupplot {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) !important;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: popupOpen 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            scroll-behavior: smooth;
+        }
+
+        @keyframes popupOpen {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8) !important;
+            }
+
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1) !important;
+            }
+        }
+
+        .popupplot.active {
+            display: block;
+        }
+
+        .popupplot-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
+        }
+
+        .popupplot h3 {
+            color: #333;
+            font-size: 1.8rem;
+            margin: 0;
+        }
+
+        .status-badge {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-badge.available {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-badge.sold {
+            background: #dc3545;
+            color: white;
+        }
+
+        .status-badge.booked {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .status-badge.under_review {
+            background: #6c757d;
+            color: white;
+        }
+
+        .popupplot-info {
+            margin: 20px 0;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .price-breakdown {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .price-breakdown h4 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .price-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding-bottom: 8px;
+            gap: 20px;
+            border-bottom: 1px dashed #ddd;
+        }
+
+        .price-item:last-child {
+            border-bottom: none;
+        }
+
+        .price-item.total {
+            font-weight: bold;
+            color: #333;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #667eea;
+        }
+
+        .price-item .price {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .popupplot-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding-top: 15px;
+            margin-bottom: -10px;
+        }
+
+        .btnslide {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .btnslide-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btnslide-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btnslide-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btnslide-secondary:hover {
+            background: #5a6268;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            animation: fadeIn 0.3s ease;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff6b6b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 9999;
+            font-weight: 600;
+            display: none;
+            animation: toastSlideIn 0.3s ease;
+        }
+
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .side-panel-actions {
+            margin-top: auto;
+            display: flex;
+            gap: 10px;
+        }
+
+        .side-btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .side-btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .side-btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .side-btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .side-btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ZOOM CONTROLS */
+        #zoom-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 15px;
+            border-radius: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .zoom-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        #zoom-info {
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            #side-panel {
+                width: 320px;
+                padding: 15px;
+            }
+
+            .side-panel-header h3 {
+                font-size: 1.4rem;
+            }
+
+            .side-section h4 {
+                font-size: 1.1rem;
+            }
+
+            #side-panel-toggle-container {
+                top: 10px;
+                left: 10px;
+            }
+
+            #side-panel-toggle {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+            }
+
+            .popupplot {
+                width: 95%;
+                padding: 20px;
+                max-height: 85vh;
+                top: 50%;
+            }
+
+            .popupplot h3 {
+                font-size: 1.5rem;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .popupplot-actions {
+                flex-direction: column;
+            }
+
+            .btnslide {
+                width: 100%;
+            }
+
+            .side-panel-actions {
+                flex-direction: column;
+            }
+
+            .side-btn {
+                width: 100%;
+            }
+
+            .table-scroll {
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #exceltable {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            #exceltable th,
+            #exceltable td {
+                font-size: 12px;
+                padding: 6px;
+                white-space: nowrap;
+            }
+
+            .table-scroll h4 {
+                font-size: 14px;
+            }
+
+            #zoom-controls {
+                bottom: 10px;
+                right: 10px;
+                padding: 5px 10px;
+                gap: 5px;
+            }
+
+            .zoom-btn {
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+            }
+
+            #zoom-info {
+                font-size: 0.8rem;
+                min-width: 70px;
+                padding: 5px 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #side-panel {
+                width: 280px;
+            }
+
+            .plot-marker {
+                font-size: 1.6px;
+            }
+
+            .popupplot {
+                width: 95%;
+                padding: 15px;
+                max-height: 70vh;
+                top: 60%;
+            }
+
+            .popupplot h3 {
+                font-size: 1.3rem;
+            }
+
+            #zoom-controls {
+                bottom: 5px;
+                right: 5px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner"></div>
+        <p>Loading plots data...</p>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <!-- SIDE PANEL -->
+    <div class="side-panel-overlay" id="side-panel-overlay"></div>
+    <div id="side-panel">
+        <div class="side-panel-header">
+            <h3>🏡 Plot Price Filter</h3>
+            <button class="close-side-panel" onclick="closeSidePanel()">×</button>
+        </div>
+
+        <!-- ONLY PRICE FILTER SECTION -->
+        <div class="side-section">
+            <h4><span class="icon">💰</span> Select Price Range</h4>
+            <div class="option-group">
+                <label for="price-range">Filter plots by total price (area × ₹2200/sq ft):</label>
+                <select id="price-range" onchange="applyFilters()">
+                    <option value="">-- All Price Ranges --</option>
+                    <option value="25L-35L">25 Lakhs - 35 Lakhs</option>
+                    <option value="35L-45L">35 Lakhs - 45 Lakhs</option>
+                    <option value="45L-55L">45 Lakhs - 55 Lakhs</option>
+                    <option value="55L-65L">55 Lakhs - 65 Lakhs</option>
+                    <option value="65L-75L">65 Lakhs - 75 Lakhs</option>
+                    <option value="75L-85L">75 Lakhs - 85 Lakhs</option>
+                    <option value="85L-1CR">85 Lakhs - 1 Crore</option>
+                    <option value="1CR+">Above 1 Crore</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="side-panel-actions">
+            <button class="side-btn side-btn-primary" onclick="applySideSelections()">Apply Filter</button>
+            <button class="side-btn side-btn-secondary" onclick="resetSideSelections()">Clear Filter</button>
+        </div>
+    </div>
+
+    <!-- CONFIGURE PLOT BUTTON -->
+    <div id="side-panel-toggle-container">
+        <button id="side-panel-toggle" onclick="openSidePanel()">
+            <span>💰 Filter by Price</span>
+        </button>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div id="containerslide21">
+        <div id="imageWrapper">
+            <img id="plotImage" src="img/plot.png" alt="Plot Layout Map">
+        </div>
+    </div>
+
+    <!-- ZOOM CONTROLS -->
+    <div id="zoom-controls">
+        <button class="zoom-btn" onclick="zoomOut()">-</button>
+        <div id="zoom-info">
+            🔍 100%
+        </div>
+        <button class="zoom-btn" onclick="zoomIn()">+</button>
+        <button class="zoom-btn" onclick="resetZoom()">↺</button>
+    </div>
+
+    <!-- PLOT DETAILS popupplot -->
+    <div class="overlay" id="overlay"></div>
+    <div class="popupplot" id="popupplot">
+        <div class="popupplot-header">
+            <h3 id="popupplotTitle">Plot Details</h3>
+            <span class="status-badge" id="statusBadge">Available</span>
+        </div>
+
+        <div class="popupplot-info" id="popupplotInfo"></div>
+
+        <div class="price-breakdown" id="priceBreakdown">
+            <h4>💰 Price Breakdown</h4>
+        </div>
+
+        <div class="popupplot-actions">
+            <a href="https://pages.razorpay.com/pl_S641bQ62huvkc1/view" target="_blank">
+                <button class="btn btn-primary">📞 Block Plot- ₹51,000 EOI</button>
+            </a>
+            <button class="btnslide btnslide-secondary" onclick="closepopupplot()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const containerslide21 = document.getElementById('containerslide21');
+        const imageWrapper = document.getElementById('imageWrapper');
+        const plotImage = document.getElementById('plotImage');
+        const popupplot = document.getElementById('popupplot');
+        const overlay = document.getElementById('overlay');
+        const sidePanel = document.getElementById('side-panel');
+        const sidePanelOverlay = document.getElementById('side-panel-overlay');
+        const toast = document.getElementById('toast');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const zoomInfo = document.getElementById('zoom-info');
+
+        let scale = 1;
+        let isDragging = false;
+        let startX, startY;
+        let translateX = 0, translateY = 0;
+        let markers = [];
+        let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        let currentPlot = null;
+        let imageNaturalWidth = 0;
+        let imageNaturalHeight = 0;
+
+        // Touch handling variables
+        let touchStartTime = 0;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let lastTapTime = 0;
+        let tapTimeout = null;
+
+        // Store all plots data from backend
+        let allPlots = [];
+
+        // Status color mapping
+        const statusColors = {
+            'available': { background: 'rgba(40, 167, 69, 0.7)', border: '#28a745' },
+            'booked': { background: 'rgba(255, 193, 7, 0.7)', border: '#ffc107' },
+            'sold': { background: 'rgba(220, 53, 69, 0.7)', border: '#dc3545' },
+            'under_review': { background: 'rgba(108, 117, 125, 0.7)', border: '#6c757d' }
+        };
+
+        // Indian number formatting function - KEEP EXACT DECIMAL VALUES
+        function formatIndianNumberSimple(num) {
+            if (num === undefined || num === null) return '0';
+            // Show exact decimal values from backend, no rounding
+            return Number(num).toLocaleString('en-IN', {
+                maximumFractionDigits: 2,
+                minimumFractionDigits: 2
+            });
+        }
+
+        // Calculate base price for a plot - USING EXACT BACKEND AREA
+        function calculatePlotBasePrice(plot) {
+            const baseRate = 2200; // ₹2200 per sq ft
+            return Number(plot.area) * baseRate;
+        }
+
+        // Calculate total price with ALL PREMIUMS based on EXACT backend values
+        function calculateTotalPlotPrice(plot) {
+            const baseRate = 2200;
+            const area = Number(plot.area);
+
+            // Base price
+            const basePrice = area * baseRate;
+
+            // CORNER rate - EXACT from backend corner field
+            let cornerRate = 0;
+            // Check if corner is true/1/"1"/"true" exactly as from backend
+            if (plot.corner === true || plot.corner === 1 || plot.corner === '1' || plot.corner === 'true') {
+                cornerRate = 100;
+            }
+
+            // GARDEN rate - EXACT from backend garden field
+            let gardenRate = 0;
+            if (plot.garden === true || plot.garden === 1 || plot.garden === '1' || plot.garden === 'true') {
+                gardenRate = 100;
+            }
+
+            // DUAL ACCESS (both corner and garden) - ₹200
+            let dualRate = 0;
+            const isCorner = (plot.corner === true || plot.corner === 1 || plot.corner === '1' || plot.corner === 'true');
+            const isGarden = (plot.garden === true || plot.garden === 1 || plot.garden === '1' || plot.garden === 'true');
+
+            if (isCorner && isGarden) {
+                dualRate = 200;
+            }
+
+            // ROAD rate - EXACT from backend road string
+            let roadRate = 0;
+            if (plot.road) {
+                const roadStr = String(plot.road).trim().toUpperCase();
+                if (roadStr.includes('9')) roadRate = 0;
+                else if (roadStr.includes('12')) roadRate = 100;
+                else if (roadStr.includes('15')) roadRate = 200;
+                else if (roadStr.includes('18')) roadRate = 300;
+            }
+
+            // Use the appropriate premium rate
+            let premiumRate = 0;
+            if (dualRate > 0) {
+                premiumRate = dualRate;
+            } else if (isCorner) {
+                premiumRate = cornerRate;
+            } else if (isGarden) {
+                premiumRate = gardenRate;
+            }
+
+            const premiumPrice = area * premiumRate;
+            const roadPrice = area * roadRate;
+
+            // Total price = Base + Premium + Road
+            const totalPrice = basePrice + premiumPrice + roadPrice;
+
+            return totalPrice;
+        }
+
+        // Check if price falls within selected range
+        function isPriceInRange(price, range) {
+            const priceInLakhs = price / 100000;
+
+            switch (range) {
+                case '25L-35L':
+                    return priceInLakhs >= 25 && priceInLakhs < 35;
+                case '35L-45L':
+                    return priceInLakhs >= 35 && priceInLakhs < 45;
+                case '45L-55L':
+                    return priceInLakhs >= 45 && priceInLakhs < 55;
+                case '55L-65L':
+                    return priceInLakhs >= 55 && priceInLakhs < 65;
+                case '65L-75L':
+                    return priceInLakhs >= 65 && priceInLakhs < 75;
+                case '75L-85L':
+                    return priceInLakhs >= 75 && priceInLakhs < 85;
+                case '85L-1CR':
+                    return priceInLakhs >= 85 && priceInLakhs < 100;
+                case '1CR+':
+                    return priceInLakhs >= 100;
+                default:
+                    return true;
+            }
+
+
+        }
+
+        // Toast notification function
+        function showToast(message, type = 'error') {
+            toast.textContent = message;
+            toast.style.display = 'block';
+            toast.style.background = type === 'error' ? '#ff6b6b' : '#28a745';
+
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // Filter plots based on price selection
+        function applyFilters() {
+            const priceRange = document.getElementById('price-range').value;
+
+            let visiblePlotCount = 0;
+            let hasActiveFilter = priceRange !== '';
+
+            markers.forEach(markerData => {
+                const plot = markerData.plot;
+                let show = true;
+
+                // Apply price filter only
+                if (priceRange && show) {
+                    const plotPrice = calculateTotalPlotPrice(plot);
+                    if (!isPriceInRange(plotPrice, priceRange)) {
+                        show = false;
+                    }
+                }
+
+                if (show) {
+                    markerData.element.classList.remove('filtered-out');
+                    markerData.element.style.pointerEvents = 'auto';
+                    visiblePlotCount++;
+                } else {
+                    markerData.element.classList.add('filtered-out');
+                    markerData.element.style.pointerEvents = 'none';
+                }
+            });
+
+            if (hasActiveFilter && visiblePlotCount === 0) {
+                showToast('No plots available for selected price range. Please adjust your selection.', 'error');
+            }
+        }
+
+        // Fetch plots data from backend
+        async function fetchPlotsData() {
+            try {
+                showLoading(true);
+
+                // Fetch plots data
+                const plotsResponse = await fetch('https://propviewer.conectr.in/api/v1/plots');
+                if (!plotsResponse.ok) {
+                    throw new Error(`HTTP error! status: ${plotsResponse.status}`);
+                }
+                const plotsData = await plotsResponse.json();
+
+                // Fetch plot points data
+                const pointsResponse = await fetch('https://propviewer.conectr.in/api/v1/plot-points');
+                if (!pointsResponse.ok) {
+                    throw new Error(`HTTP error! status: ${pointsResponse.status}`);
+                }
+                const pointsData = await pointsResponse.json();
+
+                // Combine plots with their points - USE EXACT BACKEND VALUES, NO NORMALIZATION
+                allPlots = plotsData.map(plot => {
+                    // Find points for this plot
+                    const plotPoints = pointsData.filter(point => point.plot_id === plot.id);
+
+                    // Sort points by sort_order
+                    plotPoints.sort((a, b) => a.sort_order - b.sort_order);
+
+                    // Create points string for SVG polygon
+                    const pointsString = plotPoints.map(point => `${point.x} ${point.y}`).join(' ');
+
+                    // Normalize status ONLY for CSS classes, keep original for display
+                    const normalizedStatus = (plot.status || 'available').toLowerCase().replace(/\s+/g, '-');
+
+                    // KEEP EXACT BACKEND VALUES - no rounding, no normalization of numbers
+                    return {
+                        id: plot.id,
+                        plot_id: plot.plot_id,
+                        points: pointsString,
+                        parsedPoints: plotPoints.map(point => ({
+                            x: parseFloat(point.x),
+                            y: parseFloat(point.y)
+                        })),
+                        area: parseFloat(plot.area),                    // EXACT area from backend (e.g., 5035.45)
+                        fsi: parseFloat(plot.fsi),                      // EXACT FSI
+                        permissible_area: parseFloat(plot.permissible_area), // EXACT permissible area
+                        rl: plot.rl || '',
+                        status_original: plot.status,                   // Keep original status for display
+                        status: normalizedStatus,                       // Normalized for CSS classes
+                        road: plot.road ? String(plot.road).trim() : '', // EXACT road value with spaces preserved
+                        plot_type: plot.plot_type || '',
+                        category: plot.category || '',
+                        corner: plot.corner,                            // EXACT corner value (true/false/1/0)
+                        garden: plot.garden,                            // EXACT garden value (true/false/1/0)
+                        notes: plot.notes || '',
+                        created_at: plot.created_at,
+                        updated_at: plot.updated_at
+                    };
+                });
+
+                // Calculate bounds for each plot
+                calculatePlotBounds();
+
+                // Create markers
+                createMarkers();
+
+                console.log(`Loaded ${allPlots.length} plots with exact backend values`);
+            } catch (error) {
+                console.error('Error fetching plots data:', error);
+                showToast('Failed to load plot data. Please refresh the page.', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Calculate bounds for each plot
+        function calculatePlotBounds() {
+            allPlots.forEach(plot => {
+                const points = plot.parsedPoints;
+                const xValues = points.map(p => p.x);
+                const yValues = points.map(p => p.y);
+
+                plot.bounds = {
+                    minX: Math.min(...xValues),
+                    maxX: Math.max(...xValues),
+                    minY: Math.min(...yValues),
+                    maxY: Math.max(...yValues),
+                    width: Math.max(...xValues) - Math.min(...xValues),
+                    height: Math.max(...yValues) - Math.min(...yValues)
+                };
+
+                plot.center = {
+                    x: (plot.bounds.minX + plot.bounds.maxX) / 2,
+                    y: (plot.bounds.minY + plot.bounds.maxY) / 2
+                };
+            });
+        }
+
+        // Create markers using SVG coordinates
+        function createMarkers() {
+            markers = [];
+
+            // Clear existing markers
+            document.querySelectorAll('.plot-marker').forEach(el => el.remove());
+
+            // Get actual displayed image dimensions
+            const displayedWidth = plotImage.offsetWidth;
+            const displayedHeight = plotImage.offsetHeight;
+
+            // Calculate scale factors
+            const scaleX = displayedWidth / imageNaturalWidth;
+            const scaleY = displayedHeight / imageNaturalHeight;
+
+            allPlots.forEach(plot => {
+                if (!plot.bounds) return;
+
+                const marker = document.createElement('div');
+                const plotNumber = plot.plot_id || plot.id.match(/\d+/)?.[0] || '';
+
+                // Scale bounds to displayed image size
+                const scaledBounds = {
+                    minX: plot.bounds.minX * scaleX,
+                    minY: plot.bounds.minY * scaleY,
+                    maxX: plot.bounds.maxX * scaleX,
+                    maxY: plot.bounds.maxY * scaleY,
+                    width: plot.bounds.width * scaleX,
+                    height: plot.bounds.height * scaleY
+                };
+
+                // Get color for status
+                const statusColor = statusColors[plot.status] || statusColors['available'];
+
+                marker.className = `plot-marker ${plot.status}`;
+                marker.style.position = 'absolute';
+                marker.style.left = `${scaledBounds.minX}px`;
+                marker.style.top = `${scaledBounds.minY}px`;
+                marker.style.width = `${scaledBounds.width}px`;
+                marker.style.height = `${scaledBounds.height}px`;
+
+                // Create SVG for polygon
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('width', '100%');
+                svg.setAttribute('height', '100%');
+                svg.setAttribute('viewBox', `0 0 ${scaledBounds.width} ${scaledBounds.height}`);
+                svg.style.position = 'absolute';
+                svg.style.top = '0';
+                svg.style.left = '0';
+
+                const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+
+                // Convert points to local coordinates within the marker
+                const localPoints = plot.parsedPoints.map(point => {
+                    const x = (point.x - plot.bounds.minX) * scaleX;
+                    const y = (point.y - plot.bounds.minY) * scaleY;
+                    return `${x},${y}`;
+                }).join(' ');
+
+                polygon.setAttribute('points', localPoints);
+                polygon.setAttribute('fill', statusColor.background);
+                polygon.setAttribute('stroke', statusColor.border);
+                polygon.setAttribute('stroke-width', '2');
+                polygon.classList.add('plot-polygon');
+
+                svg.appendChild(polygon);
+
+                // Create plot number display
+                const numberDisplay = document.createElement('div');
+                numberDisplay.className = 'plot-number';
+                numberDisplay.textContent = plotNumber;
+
+                marker.appendChild(svg);
+                marker.appendChild(numberDisplay);
+
+                // Set data attributes
+                marker.dataset.plotId = plot.id;
+                marker.dataset.plotNumber = plotNumber;
+                marker.dataset.area = plot.area;
+                marker.dataset.road = plot.road;
+                marker.dataset.status = plot.status;
+
+                // Calculate total price for tooltip
+                const plotPrice = calculateTotalPlotPrice(plot);
+                const priceInLakhs = (plotPrice / 100000).toFixed(2);
+
+                // Add event listeners for mobile touch
+                if (isMobile) {
+                    marker.addEventListener('touchstart', handleMarkerTouchStart, { passive: true });
+                    marker.addEventListener('touchend', handleMarkerTouchEnd, { passive: true });
+                    marker.addEventListener('touchmove', handleMarkerTouchMove, { passive: true });
+                } else {
+                    marker.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showpopupplot(plot);
+                    });
+                }
+
+                // Set tooltip with EXACT backend values
+                let viewType = '';
+                const isCorner = (plot.corner === true || plot.corner === 1 || plot.corner === '1' || plot.corner === 'true');
+                const isGarden = (plot.garden === true || plot.garden === 1 || plot.garden === '1' || plot.garden === 'true');
+
+                if (isCorner && isGarden) viewType = 'Dual Access & Premium';
+                else if (isGarden) viewType = 'Premium Plot';
+                else if (isCorner) viewType = 'Dual Access';
+                else viewType = 'Standard Plot';
+
+                const statusText = plot.status_original || plot.status;
+
+                marker.title = `${plot.plot_id || plot.id} - ₹${formatIndianNumberSimple(plotPrice)} (${priceInLakhs} Lakhs) | ${viewType} | Road: ${plot.road} | Status: ${statusText} | Area: ${formatIndianNumberSimple(plot.area)} sq.ft`;
+
+                imageWrapper.appendChild(marker);
+                markers.push({
+                    element: marker,
+                    plot: plot
+                });
+            });
+        }
+
+        // Mobile touch handlers for plot markers
+        let activeMarkerTouch = null;
+        let touchMoved = false;
+
+        function handleMarkerTouchStart(e) {
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                const marker = e.currentTarget;
+                activeMarkerTouch = {
+                    marker: marker,
+                    startX: touch.clientX,
+                    startY: touch.clientY,
+                    startTime: Date.now()
+                };
+                touchMoved = false;
+                marker.classList.add('highlighted');
+                e.preventDefault();
+            }
+        }
+
+        function handleMarkerTouchMove(e) {
+            if (activeMarkerTouch && e.touches.length === 1) {
+                const touch = e.touches[0];
+                const deltaX = Math.abs(touch.clientX - activeMarkerTouch.startX);
+                const deltaY = Math.abs(touch.clientY - activeMarkerTouch.startY);
+
+                if (deltaX > 10 || deltaY > 10) {
+                    touchMoved = true;
+                    activeMarkerTouch.marker.classList.remove('highlighted');
+                }
+            }
+        }
+
+        function handleMarkerTouchEnd(e) {
+            if (activeMarkerTouch && !touchMoved) {
+                const touchDuration = Date.now() - activeMarkerTouch.startTime;
+
+                if (touchDuration < 300) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const plotId = activeMarkerTouch.marker.dataset.plotId;
+                    const plot = allPlots.find(p => p.id == plotId);
+
+                    if (plot) {
+                        showpopupplot(plot);
+                    }
+                }
+
+                activeMarkerTouch.marker.classList.remove('highlighted');
+            }
+
+            activeMarkerTouch = null;
+            touchMoved = false;
+        }
+
+        // SIDE PANEL FUNCTIONS
+        function openSidePanel() {
+            sidePanel.classList.add('active');
+            sidePanelOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSidePanel() {
+            sidePanel.classList.remove('active');
+            sidePanelOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function applySideSelections() {
+            applyFilters();
+            closeSidePanel();
+        }
+
+        function resetSideSelections() {
+            document.getElementById('price-range').value = '';
+            applyFilters();
+        }
+
+        // FIXED: Popup always opens at the top
+        function showpopupplot(plot) {
+            // Reset popup scroll position to top BEFORE showing it
+            const popup = document.getElementById('popupplot');
+            const overlay = document.getElementById('overlay');
+
+            // Reset scroll position
+            popup.scrollTop = 0;
+            popup.scrollTo({ top: 0, behavior: 'instant' });
+
+            // Make visible and set current plot
+            popup.style.display = 'block';
+            currentPlot = plot;
+
+            // Activate popup and overlay
+            overlay.classList.add('active');
+            popup.classList.add('active');
+
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+
+            // Set title with proper fallback
+            const displayId = plot.plot_id || plot.id;
+            document.getElementById('popupplotTitle').textContent = displayId;
+
+            // Set status badge with original status
+            const statusText = plot.status_original || plot.status;
+            const badge = document.getElementById('statusBadge');
+            badge.textContent = statusText;
+            badge.className = `status-badge ${plot.status}`;
+
+            // RL field determines possession
+            const readyPossession = plot.rl && String(plot.rl).trim() ? 'Ready to Register' : 'Under Development';
+
+            // Determine corner/garden/dual rates - EXACT from backend values
+            const isCorner = (plot.corner === true || plot.corner === 1 || plot.corner === '1' || plot.corner === 'true');
+            const isGarden = (plot.garden === true || plot.garden === 1 || plot.garden === '1' || plot.garden === 'true');
+
+            let cornerGardenRate = 0;
+            let cornerGardenText = 'Standard Plot';
+
+            if (isCorner && isGarden) {
+                cornerGardenRate = 200;
+                cornerGardenText = 'Dual Access';
+            } else if (isCorner) {
+                cornerGardenRate = 100;
+                cornerGardenText = 'Dual Access';
+            } else if (isGarden) {
+                cornerGardenRate = 100;
+                cornerGardenText = 'Premium Plot';
+            }
+
+            // Road rate - EXACT from backend road string
+            let roadRate = 0;
+            let roadText = '9MTR';
+            if (plot.road) {
+                const roadStr = String(plot.road).trim().toUpperCase();
+                if (roadStr.includes('9')) {
+                    roadRate = 0;
+                    roadText = '9MTR';
+                } else if (roadStr.includes('12')) {
+                    roadRate = 100;
+                    roadText = '12MTR';
+                } else if (roadStr.includes('15')) {
+                    roadRate = 200;
+                    roadText = '15MTR';
+                } else if (roadStr.includes('18')) {
+                    roadRate = 300;
+                    roadText = '18MTR';
+                }
+            }
+
+            const area = Number(plot.area) || 0;
+            const baseRate = 2200;
+            const membershipAmount = 350000;
+            let membershipCheckedState = true;
+
+            function updatePrice() {
+                const basePrice = area * baseRate;
+                const cornerGardenPrice = area * cornerGardenRate;
+                const roadPrice = area * roadRate;
+                const membershipPrice = membershipCheckedState ? membershipAmount : 0;
+                const totalPrice = basePrice + cornerGardenPrice + roadPrice;
+                const stampDuty = totalPrice * 0.06;
+                const onePercent = totalPrice * 0.01;
+                const registrationFee = Math.min(onePercent, 30000);
+                const legalCharge = 14000;
+                const maintenanceAmount = area * 10 * 3;
+                const totalPriceWithAllPrice = totalPrice + legalCharge + registrationFee + stampDuty + maintenanceAmount + membershipPrice;
+
+                let priceHTML = `
+            <h4>💰 Price Breakdown</h4>
+            <div class="price-item">
+                <span>Base Price (₹${formatIndianNumberSimple(baseRate)} × ${formatIndianNumberSimple(area)})</span>
+                <span class="price">₹${formatIndianNumberSimple(basePrice)}</span>
+            </div>
+            <div class="price-item">
+                <span>${cornerGardenText} (₹${formatIndianNumberSimple(cornerGardenRate)} × ${formatIndianNumberSimple(area)})</span>
+                <span class="price">${cornerGardenPrice ? '+₹' + formatIndianNumberSimple(cornerGardenPrice) : '₹0'}</span>
+            </div>
+            <div class="price-item">
+                <span>${roadText} (₹${formatIndianNumberSimple(roadRate)} × ${formatIndianNumberSimple(area)})</span>
+                <span class="price">${roadPrice ? '+₹' + formatIndianNumberSimple(roadPrice) : '₹0'}</span>
+            </div>
+            <div class="price-item total">
+                <span>Total Land Price</span>
+                <span class="price">₹${formatIndianNumberSimple(totalPrice)}</span>
+            </div>
+            <div class="price-item">
+                <span>Stamp Duty (6%)</span>
+                <span class="price">₹${formatIndianNumberSimple(stampDuty)}</span>
+            </div>
+            <div class="price-item">
+                <span>Registration Fee (1% up to ₹30,000)</span>
+                <span class="price">₹${formatIndianNumberSimple(registrationFee)}</span>
+            </div>
+            <div class="price-item">
+                <span>Legal Charge</span>
+                <span class="price">₹${formatIndianNumberSimple(legalCharge)}</span>
+            </div>
+            <div class="price-item">
+                <span>Maintenance (₹10/sq.ft × 3 Years)</span>
+                <span class="price">₹${formatIndianNumberSimple(maintenanceAmount)}</span>
+            </div>
+            <div class="price-item">
+                <label>
+                    <input type="checkbox" id="clubMembershipChk" ${membershipCheckedState ? 'checked' : ''}>
+                    Club Membership
+                </label>
+                <span class="price">${membershipPrice ? '+₹' + formatIndianNumberSimple(membershipPrice) : '₹0'}</span>
+            </div>
+            <div class="price-item total">
+                <span>Total Price (Including all charges)</span>
+                <span class="price">₹${formatIndianNumberSimple(totalPriceWithAllPrice)}</span>
+            </div>
+        `;
+
+                const bookingAmount = 51000;
+                const totalAllWithMinusMaintenanceAmount = totalPriceWithAllPrice - maintenanceAmount;
+
+                let paymentHTML = '';
+                if (readyPossession === 'Under Development') {
+                    const agreement20 = totalAllWithMinusMaintenanceAmount * 0.20;
+                    const installment15 = totalAllWithMinusMaintenanceAmount * 0.15;
+                    const remainingAmount = totalAllWithMinusMaintenanceAmount - bookingAmount - agreement20 - (installment15 * 4);
+                    const totalUnderDevelopment = totalAllWithMinusMaintenanceAmount + maintenanceAmount;
+
+                    paymentHTML = `
+                <div class="table-scroll">
+                    <h4 style="margin-top:20px;">📅 Payment Schedule (Under Development)</h4>
+                    <table id="exceltable" border="1" cellpadding="5" cellspacing="0" style="width:100%">
+                        <tr><th>S.NO</th><th>STAGES</th><th>PAYMENT</th><th>AMOUNT</th></tr>
+                        <tr><td>1</td><td>Booking Amount</td><td>Token</td><td>₹${formatIndianNumberSimple(bookingAmount)}</td></tr>
+                        <tr><td>2</td><td>Registered Agreement</td><td>20%</td><td>₹${formatIndianNumberSimple(agreement20)}</td></tr>
+                        <tr><td>3</td><td>Installment 1</td><td>15%</td><td>₹${formatIndianNumberSimple(installment15)}</td></tr>
+                        <tr><td>4</td><td>Installment 2</td><td>15%</td><td>₹${formatIndianNumberSimple(installment15)}</td></tr>
+                        <tr><td>5</td><td>Installment 3</td><td>15%</td><td>₹${formatIndianNumberSimple(installment15)}</td></tr>
+                        <tr><td>6</td><td>Installment 4</td><td>15%</td><td>₹${formatIndianNumberSimple(installment15)}</td></tr>
+                        <tr><td>7</td><td>Installment 5</td><td>Remaining</td><td>₹${formatIndianNumberSimple(remainingAmount)}</td></tr>
+                        <tr><td>8</td><td>Maintenance</td><td>₹10 / sq.ft (3 Years)</td><td>₹${formatIndianNumberSimple(maintenanceAmount)}</td></tr>
+                        <tr><td>9</td><td><b>Total</b></td><td></td><td><b>₹${formatIndianNumberSimple(totalUnderDevelopment)}</b></td></tr>
+                    </table>
+                </div>
+            `;
+                } else {
+                    const agreement20 = totalAllWithMinusMaintenanceAmount * 0.20;
+                    const remainingAmount = totalAllWithMinusMaintenanceAmount - bookingAmount - agreement20;
+                    const totalReadyRegister = totalAllWithMinusMaintenanceAmount + maintenanceAmount;
+
+                    paymentHTML = `
+                <div class="table-scroll">
+                    <h4 style="margin-top:20px;">📅 Payment Schedule (Ready to Register)</h4>
+                    <table id="exceltable" border="1" cellpadding="5" cellspacing="0" style="width:100%">
+                        <tr><th>S.NO</th><th>STAGES</th><th>PAYMENT</th><th>AMOUNT</th></tr>
+                        <tr><td>1</td><td>Booking Amount</td><td>Token</td><td>₹${formatIndianNumberSimple(bookingAmount)}</td></tr>
+                        <tr><td>2</td><td>Registered Agreement</td><td>20%</td><td>₹${formatIndianNumberSimple(agreement20)}</td></tr>
+                        <tr><td>3</td><td>Sale Deed</td><td>Remaining</td><td>₹${formatIndianNumberSimple(remainingAmount)}</td></tr>
+                        <tr><td>4</td><td>Maintenance</td><td>₹10 / sq.ft (3 Years)</td><td>₹${formatIndianNumberSimple(maintenanceAmount)}</td></tr>
+                        <tr><td>5</td><td><b>Total</b></td><td></td><td><b>₹${formatIndianNumberSimple(totalReadyRegister)}</b></td></tr>
+                    </table>
+                </div>
+            `;
+                }
+
+                // Set the complete HTML
+                document.getElementById('priceBreakdown').innerHTML = priceHTML + paymentHTML;
+
+                // Attach event listener to checkbox
+                const chkbox = document.getElementById('clubMembershipChk');
+                if (chkbox) {
+                    // Remove existing listeners to prevent duplicates
+                    chkbox.replaceWith(chkbox.cloneNode(true));
+                    const newChkbox = document.getElementById('clubMembershipChk');
+                    newChkbox.addEventListener('change', (e) => {
+                        membershipCheckedState = e.target.checked;
+                        updatePrice();
+                    });
+                }
+            }
+
+            // Populate plot information with EXACT backend values
+            document.getElementById('popupplotInfo').innerHTML = `
+        <div class="info-row"><span class="info-label">📏 Area:</span><span class="info-value">${formatIndianNumberSimple(area)} sq ft</span></div>
+        <div class="info-row"><span class="info-label">🏢 Permissible Area:</span><span class="info-value">${formatIndianNumberSimple(plot.permissible_area)} sq ft</span></div>
+        <div class="info-row"><span class="info-label">✅ Possession:</span><span class="info-value">${readyPossession}</span></div>
+        <div class="info-row"><span class="info-label">⭐ Plot Specifications:</span><span class="info-value">${cornerGardenText}</span></div>
+        <div class="info-row"><span class="info-label">🛣️ Road Accessibility:</span><span class="info-value">${plot.road || 'N/A'}</span></div>
+        <div class="info-row"><span class="info-label">📊 Plot Type:</span><span class="info-value">${plot.plot_type}</span></div>
+    `;
+
+            // Initial price calculation
+            updatePrice();
+
+            // Highlight the clicked marker
+            markers.forEach(markerData => {
+                markerData.element.classList.remove('highlighted');
+            });
+            const clickedMarker = markers.find(m => m.plot.id === plot.id);
+            if (clickedMarker) {
+                clickedMarker.element.classList.add('highlighted');
+            }
+        }
+
+        function closepopupplot() {
+            const popup = document.getElementById('popupplot');
+            const overlay = document.getElementById('overlay');
+
+            // Remove active classes
+            popup.classList.remove('active');
+            overlay.classList.remove('active');
+
+            // Reset body scroll
+            document.body.style.overflow = '';
+
+            // Clear current plot
+            currentPlot = null;
+
+            // Remove highlights from markers
+            markers.forEach(markerData => {
+                markerData.element.classList.remove('highlighted');
+            });
+
+            // RESET SCROLL ON CLOSE
+            popup.scrollTop = 0;
+
+            // Hide popup after animation
+            setTimeout(() => {
+                popup.style.display = 'none';
+            }, 500);
+        }
+        // Loading spinner functions
+        function showLoading(show) {
+            if (show) {
+                loadingSpinner.style.display = 'block';
+            } else {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        // Zoom functions
+        function updateTransform() {
+            imageWrapper.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+            zoomInfo.textContent = `🔍 ${Math.round(scale * 100)}%`;
+        }
+
+        function zoomIn() {
+            scale = Math.min(10, scale + 0.1);
+            updateTransform();
+        }
+
+        function zoomOut() {
+            scale = Math.max(0.5, scale - 0.1);
+            updateTransform();
+        }
+
+        function resetZoom() {
+            scale = 1;
+            translateX = 0;
+            translateY = 0;
+            updateTransform();
+        }
+
+        overlay.addEventListener('click', () => {
+            closepopupplot();
+        });
+
+        sidePanelOverlay.addEventListener('click', () => {
+            closeSidePanel();
+        });
+
+        // Zoom and drag functions
+        plotImage.addEventListener('dragstart', (e) => {
+            e.preventDefault();
+            return false;
+        });
+
+        // Desktop mouse events
+        containerslide21.addEventListener('mousedown', (e) => {
+            if (e.target.classList.contains('plot-marker') || e.target.closest('.plot-marker')) {
+                return;
+            }
+            isDragging = true;
+            startX = e.clientX - translateX;
+            startY = e.clientY - translateY;
+            containerslide21.style.cursor = 'grabbing';
+        });
+
+        containerslide21.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            updateTransform();
+        });
+
+        containerslide21.addEventListener('mouseup', () => {
+            isDragging = false;
+            containerslide21.style.cursor = 'grab';
+        });
+
+        containerslide21.addEventListener('mouseleave', () => {
+            isDragging = false;
+            containerslide21.style.cursor = 'grab';
+        });
+
+        containerslide21.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            scale = Math.max(0.5, Math.min(10, scale + delta));
+            updateTransform();
+        });
+
+        // Mobile touch events for container
+        let touchDistance = 0;
+        let isPinching = false;
+        let initialTouches = [];
+
+        containerslide21.addEventListener('touchstart', (e) => {
+            if (e.target.classList.contains('plot-marker') || e.target.closest('.plot-marker')) {
+                return;
+            }
+
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                touchStartX = touch.clientX - translateX;
+                touchStartY = touch.clientY - translateY;
+                isPinching = false;
+            } else if (e.touches.length === 2) {
+                isPinching = true;
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                touchDistance = Math.sqrt(
+                    Math.pow(touch2.clientX - touch1.clientX, 2) +
+                    Math.pow(touch2.clientY - touch1.clientY, 2)
+                );
+                initialTouches = [touch1, touch2];
+            }
+        }, { passive: true });
+
+        containerslide21.addEventListener('touchmove', (e) => {
+            if (e.target.classList.contains('plot-marker') || e.target.closest('.plot-marker')) {
+                return;
+            }
+
+            if (e.touches.length === 1 && !isPinching) {
+                const touch = e.touches[0];
+                translateX = touch.clientX - touchStartX;
+                translateY = touch.clientY - touchStartY;
+                updateTransform();
+            } else if (e.touches.length === 2) {
+                isPinching = true;
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const newDistance = Math.sqrt(
+                    Math.pow(touch2.clientX - touch1.clientX, 2) +
+                    Math.pow(touch2.clientY - touch1.clientY, 2)
+                );
+                if (touchDistance > 0) {
+                    const delta = (newDistance - touchDistance) * 0.01;
+                    scale = Math.max(0.5, Math.min(10, scale + delta));
+                    updateTransform();
+                    touchDistance = newDistance;
+                }
+            }
+        }, { passive: true });
+
+        containerslide21.addEventListener('touchend', () => {
+            isPinching = false;
+            touchDistance = 0;
+            initialTouches = [];
+        }, { passive: true });
+
+        containerslide21.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            if (scale < 2) {
+                scale = 2;
+            } else {
+                scale = 1;
+                translateX = 0;
+                translateY = 0;
+            }
+            updateTransform();
+        });
+
+        plotImage.onload = function () {
+            imageNaturalWidth = plotImage.naturalWidth;
+            imageNaturalHeight = plotImage.naturalHeight;
+
+            // Fetch plots data after image loads
+            fetchPlotsData();
+
+            if (window.innerWidth < 768) {
+                scale = 1;
+                updateTransform();
+            }
+
+        };
+
+        plotImage.onerror = function () {
+            console.error("⚠️ Error loading plot image. Please ensure 'img/plot.png' exists.");
+            plotImage.src = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+                <svg width="3000" height="2000" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100%" height="100%" fill="#f0f0f0"/>
+                    <text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="40" fill="#666">
+                        Plot Layout Image (plot.png)
+                    </text>
+                </svg>
+            `);
+        };
+
+        containerslide21.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        if (isIOS) {
+            containerslide21.style.webkitTransform = 'translate3d(0,0,0)';
+            imageWrapper.style.webkitTransform = 'translate3d(0,0,0)';
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.webkitUserSelect = 'none';
+            document.body.style.userSelect = 'none';
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            if (plotImage.complete) {
+                fetchPlotsData();
+            }
+        });
+    </script>
+</body>
+
+</html>
