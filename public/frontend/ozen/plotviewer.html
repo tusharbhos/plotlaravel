@@ -1275,11 +1275,11 @@
 
                 polygon.setAttribute('points', localPoints);
                 polygon.setAttribute('fill', statusColor.background);
-                polygon.setAttribute('stroke', statusColor.border);
-                polygon.setAttribute('stroke-width', '2');
+                // polygon.setAttribute('stroke', statusColor.border);
+                // polygon.setAttribute('stroke-width', '2');
                 polygon.classList.add('plot-polygon');
 
-                svg.appendChild(polygon);
+                svg.appendChild(polygon);//
 
                 // Create plot number display
                 const numberDisplay = document.createElement('div');
