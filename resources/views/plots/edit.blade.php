@@ -321,33 +321,29 @@ $backUrl = session('plot_index_url', route('plots.index'));
 
 @push('scripts')
 <script>
-    let pointIndex = {
-        {
-            $plot - > points - > count()
-        }
-    };
+    let pointIndex = {{ $plot->points->count() }};
 
     function addPoint() {
         const container = document.getElementById("pointsContainer");
         const row = document.createElement("div");
         row.className = "point-row flex items-center gap-3 bg-gray-50 rounded-lg p-3";
         row.innerHTML = `
-        <div class="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-xs flex-shrink-0">${pointIndex + 1}</div>
-        <div class="flex-1 flex items-center gap-2">
-            <div class="flex-1">
-                <label class="block text-xs text-gray-400 mb-0.5">X</label>
-                <input type="number" name="points[${pointIndex}][x]" step="any" placeholder="X"
-                    class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" oninput="updatePreview()" />
+            <div class="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-xs flex-shrink-0">${pointIndex + 1}</div>
+            <div class="flex-1 flex items-center gap-2">
+                <div class="flex-1">
+                    <label class="block text-xs text-gray-400 mb-0.5">X</label>
+                    <input type="number" name="points[${pointIndex}][x]" step="any" placeholder="X"
+                        class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" oninput="updatePreview()" />
+                </div>
+                <div class="flex-1">
+                    <label class="block text-xs text-gray-400 mb-0.5">Y</label>
+                    <input type="number" name="points[${pointIndex}][y]" step="any" placeholder="Y"
+                        class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" oninput="updatePreview()" />
+                </div>
             </div>
-            <div class="flex-1">
-                <label class="block text-xs text-gray-400 mb-0.5">Y</label>
-                <input type="number" name="points[${pointIndex}][y]" step="any" placeholder="Y"
-                    class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-indigo-400" oninput="updatePreview()" />
-            </div>
-        </div>
-        <button type="button" class="text-gray-400 hover:text-red-500 transition" onclick="removePoint(this)">
-            <i class="fas fa-times text-sm"></i>
-        </button>`;
+            <button type="button" class="text-gray-400 hover:text-red-500 transition" onclick="removePoint(this)">
+                <i class="fas fa-times text-sm"></i>
+            </button>`;
         container.appendChild(row);
         pointIndex++;
         updatePointCount();
@@ -366,8 +362,8 @@ $backUrl = session('plot_index_url', route('plots.index'));
         rows.forEach((row, i) => {
             const badge = row.querySelector(".rounded-full");
             if (badge) badge.textContent = (i + 1);
-            const xInput = row.querySelector("input[name*=\"[x]\"]");
-            const yInput = row.querySelector("input[name*=\"[y]\"]");
+            const xInput = row.querySelector("input[name*='[x]']");
+            const yInput = row.querySelector("input[name*='[y]']");
             if (xInput) xInput.setAttribute("name", "points[" + i + "][x]");
             if (yInput) yInput.setAttribute("name", "points[" + i + "][y]");
         });
@@ -379,22 +375,13 @@ $backUrl = session('plot_index_url', route('plots.index'));
         document.getElementById("pointCount").textContent = count + " points";
     }
 
-    document.addEventListener("input", function(e) {
-        if (e.target.name && e.target.name.includes("points[")) {
-            updatePreview();
-        }
-    });
-
     function updatePreview() {
         const rows = document.querySelectorAll(".point-row");
         let points = [];
         rows.forEach(row => {
-            const x = parseFloat(row.querySelector("input[name*=\"[x]\"]")?.value);
-            const y = parseFloat(row.querySelector("input[name*=\"[y]\"]")?.value);
-            if (!isNaN(x) && !isNaN(y)) points.push({
-                x,
-                y
-            });
+            const x = parseFloat(row.querySelector("input[name*='[x]']")?.value);
+            const y = parseFloat(row.querySelector("input[name*='[y]']")?.value);
+            if (!isNaN(x) && !isNaN(y)) points.push({ x, y });
         });
 
         if (points.length < 2) {
@@ -406,18 +393,20 @@ $backUrl = session('plot_index_url', route('plots.index'));
         const maxX = Math.max(...points.map(p => p.x));
         const minY = Math.min(...points.map(p => p.y));
         const maxY = Math.max(...points.map(p => p.y));
-
         const scale = Math.min(80 / (maxX - minX || 1), 80 / (maxY - minY || 1));
+
         const norm = points.map(p => ({
             x: 10 + (p.x - minX) * scale,
             y: 10 + (p.y - minY) * scale
         }));
 
-        document.getElementById("previewPolygon").setAttribute("points", norm.map(p => p.x + "," + p.y).join(" "));
+        document.getElementById("previewPolygon").setAttribute(
+            "points",
+            norm.map(p => p.x + "," + p.y).join(" ")
+        );
     }
 
-    // Init preview on load
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         updatePreview();
     });
 </script>
