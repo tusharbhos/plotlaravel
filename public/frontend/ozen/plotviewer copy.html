@@ -141,31 +141,6 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
         }
 
-        .checkbox-options {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .checkbox-option {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            padding: 5px 0;
-        }
-
-        .checkbox-option input[type="radio"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
-        .checkbox-option span {
-            font-size: 1rem;
-            color: #444;
-        }
-
         /* CONFIGURE PLOT BUTTON */
         #side-panel-toggle-container {
             position: fixed;
@@ -890,7 +865,7 @@
                 <label for="price-range">Filter plots by total price (area × ₹2200/sq ft):</label>
                 <select id="price-range" onchange="applyFilters()">
                     <option value="">-- All Price Ranges --</option>
-                    <option value="20L-35L">20 Lakhs - 35 Lakhs</option>
+                    <option value="25L-35L">25 Lakhs - 35 Lakhs</option>
                     <option value="35L-45L">35 Lakhs - 45 Lakhs</option>
                     <option value="45L-55L">45 Lakhs - 55 Lakhs</option>
                     <option value="55L-65L">55 Lakhs - 65 Lakhs</option>
@@ -901,106 +876,17 @@
                 </select>
             </div>
         </div>
-        <!-- PLOT TYPE FILTER -->
-        <div class="side-section">
-            <h4><span class="icon">🏠</span> Plot Type</h4>
-            <div class="checkbox-options">
-                <label class="checkbox-option">
-                    <input type="radio" name="side-plotType" value="" onchange="applyFilters()" checked>
-                    <span>All Plots</span>
-                </label>
-                <label class="checkbox-option">
-                    <input type="radio" name="side-plotType" value="Land parcel" onchange="applyFilters()">
-                    <span>Land Parcel</span>
-                </label>
-                <label class="checkbox-option">
-                    <input type="radio" name="side-plotType" value="BUNGALOW PLOTS" onchange="applyFilters()">
-                    <span>Bungalow Plots</span>
-                </label>
-            </div>
-        </div>
-
-        <!-- SQUARE FEET RANGE -->
-        <div class="side-section">
-            <h4><span class="icon">📐</span> Square Feet Range</h4>
-            <div class="option-group">
-                <select id="side-sqft-range" class="filter-select" onchange="applyFilters()">
-                    <option value="">-- All Square Feet --</option>
-                    <option value="0-1000">0-1000 sq ft</option>
-                    <option value="1000-2000">1000-2000 sq ft</option>
-                    <option value="2000-3000">2000-3000 sq ft</option>
-                    <option value="3000-4000">3000-4000 sq ft</option>
-                    <option value="4000-5000">4000-5000 sq ft</option>
-                    <option value="5000-6000">5000-6000 sq ft</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- POSSESSION FILTER -->
-        <div class="side-section">
-            <h4><span class="icon">📋</span> Possession</h4>
-            <div class="option-group">
-                <select id="side-ready-possession" class="filter-select" onchange="applyFilters()">
-                    <option value="">-- All Possession --</option>
-                    <option value="ready">Ready to Register</option>
-                    <option value="under">Under Development</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- PLOT SPECIFICATIONS -->
-        <div class="side-section">
-            <h4><span class="icon">🏡</span> Plot Specifications</h4>
-            <div class="checkbox-options">
-                <label class="checkbox-option">
-                    <input type="radio" name="plot-specs" value="" onchange="applyFilters()" checked>
-                    <span>All Types</span>
-                </label>
-                <label class="checkbox-option">
-                    <input type="radio" name="plot-specs" value="standard" onchange="applyFilters()">
-                    <span>Standard Plot</span>
-                </label>
-                <label class="checkbox-option">
-                    <input type="radio" name="plot-specs" value="corner" onchange="applyFilters()">
-                    <span>Dual Access</span>
-                </label>
-                <label class="checkbox-option">
-                    <input type="radio" name="plot-specs" value="garden" onchange="applyFilters()">
-                    <span>Premium Plots</span>
-                </label>
-                <label class="checkbox-option">
-                    <input type="radio" name="plot-specs" value="both" onchange="applyFilters()">
-                    <span>Dual Access + Premium</span>
-                </label>
-            </div>
-        </div>
-
-        <!-- ROAD ACCESSIBILITY -->
-        <div class="side-section">
-            <h4><span class="icon">🛣️</span> Road Accessibility</h4>
-            <div class="option-group">
-                <select id="side-road-width" class="filter-select" onchange="applyFilters()">
-                    <option value="">-- All Road Widths --</option>
-                    <option value="9m">9m Road</option>
-                    <option value="12m">12m Road</option>
-                    <option value="15m">15m Road</option>
-                    <option value="18m">18m Road</option>
-                </select>
-            </div>
-        </div>
-
-
 
         <div class="side-panel-actions">
-            <button class="side-btn side-btn-primary" onclick="applyFilters()">Apply Filter</button>
-            <button class="side-btn side-btn-secondary" onclick="resetAllFilters()">Clear All Filters</button>
+            <button class="side-btn side-btn-primary" onclick="applySideSelections()">Apply Filter</button>
+            <button class="side-btn side-btn-secondary" onclick="resetSideSelections()">Clear Filter</button>
         </div>
     </div>
 
     <!-- CONFIGURE PLOT BUTTON -->
     <div id="side-panel-toggle-container">
         <button id="side-panel-toggle" onclick="openSidePanel()">
-            <span>🔍 Filter Plots</span>
+            <span>💰 Filter by Price</span>
         </button>
     </div>
 
@@ -1022,7 +908,7 @@
     </div>
 
     <!-- PLOT DETAILS popupplot -->
-    <div class="overlay" id="overlay" onclick="closepopupplot()"></div>
+    <div class="overlay" id="overlay"></div>
     <div class="popupplot" id="popupplot">
         <div class="popupplot-header">
             <h3 id="popupplotTitle">Plot Details</h3>
@@ -1037,14 +923,13 @@
 
         <div class="popupplot-actions">
             <a rel="noopener noreferrer" href="https://pages.razorpay.com/pl_S641bQ62huvkc1/view" target="_blank">
-                <button class="btn btn-primary">📞 Block Plot - ₹51,000 EOI</button>
+                <button class="btn btn-primary">📞 Block Plot- ₹51,000 EOI</button>
             </a>
             <button class="btnslide btnslide-secondary" onclick="closepopupplot()">Close</button>
         </div>
     </div>
 
     <script>
-        // ==================== VARIABLES ====================
         const containerslide21 = document.getElementById('containerslide21');
         const imageWrapper = document.getElementById('imageWrapper');
         const plotImage = document.getElementById('plotImage');
@@ -1077,16 +962,6 @@
         // Store all plots data from backend
         let allPlots = [];
 
-        // Current filter selections
-        let currentSelections = {
-            plotType: '',
-            sqftRange: '',
-            readyPossession: '',
-            plotSpecs: '',
-            roadWidth: '',
-            priceRange: ''
-        };
-
         // Status color mapping
         const statusColors = {
             'available': { background: 'rgba(40, 167, 69, 0.7)', border: '#28a745' },
@@ -1095,15 +970,7 @@
             'under_review': { background: 'rgba(108, 117, 125, 0.7)', border: '#6c757d' }
         };
 
-        // Road width mapping
-        const roadWidthMap = {
-            '9m': '9MTR',
-            '12m': '12MTR',
-            '15m': '15MTR',
-            '18m': '18MTR'
-        };
-
-        // ==================== UTILITY FUNCTIONS ====================
+        // Indian number formatting function - KEEP EXACT DECIMAL VALUES
         function formatIndianNumberSimple(num) {
             if (num === undefined || num === null) return '0';
             // Show exact decimal values from backend, no rounding
@@ -1183,8 +1050,8 @@
             const priceInLakhs = price / 100000;
 
             switch (range) {
-                case '20L-35L':
-                    return priceInLakhs >= 20 && priceInLakhs < 35;
+                case '25L-35L':
+                    return priceInLakhs >= 25 && priceInLakhs < 35;
                 case '35L-45L':
                     return priceInLakhs >= 35 && priceInLakhs < 45;
                 case '45L-55L':
@@ -1217,205 +1084,41 @@
             }, 3000);
         }
 
-        function showLoading(show) {
-            loadingSpinner.style.display = show ? 'block' : 'none';
-        }
-
-        // ==================== UPDATE CURRENT SELECTIONS ====================
-        function updateCurrentSelections() {
-            // Get plot type from radio buttons
-            const plotTypeRadios = document.getElementsByName('side-plotType');
-            for (let radio of plotTypeRadios) {
-                if (radio.checked) {
-                    currentSelections.plotType = radio.value;
-                    break;
-                }
-            }
-
-            // Get other filter values
-            currentSelections.sqftRange = document.getElementById('side-sqft-range').value;
-            currentSelections.readyPossession = document.getElementById('side-ready-possession').value;
-
-            const plotSpecsRadios = document.getElementsByName('plot-specs');
-            for (let radio of plotSpecsRadios) {
-                if (radio.checked) {
-                    currentSelections.plotSpecs = radio.value;
-                    break;
-                }
-            }
-
-            currentSelections.roadWidth = document.getElementById('side-road-width').value;
-            currentSelections.priceRange = document.getElementById('price-range').value;
-        }
-
-        // ==================== MAIN FILTER FUNCTION ====================
+        // Filter plots based on price selection
         function applyFilters() {
-            updateCurrentSelections();
+            const priceRange = document.getElementById('price-range').value;
 
             let visiblePlotCount = 0;
-            let availablePlotCount = 0;
-            let hasActiveFilters = false;
-
-            // Check if any filter is active
-            if (currentSelections.plotType ||
-                currentSelections.sqftRange ||
-                currentSelections.readyPossession ||
-                currentSelections.plotSpecs ||
-                currentSelections.roadWidth ||
-                currentSelections.priceRange) {
-                hasActiveFilters = true;
-            }
+            let hasActiveFilter = priceRange !== '';
 
             markers.forEach(markerData => {
                 const plot = markerData.plot;
                 let show = true;
 
-                // 1. Filter by plot type
-                if (currentSelections.plotType && show) {
-                    if (plot.plot_type !== currentSelections.plotType) {
-                        show = false;
-                    }
-                }
-
-                // 2. Filter by square feet range
-                if (currentSelections.sqftRange && show) {
-                    const [min, max] = currentSelections.sqftRange.split('-').map(Number);
-                    if (plot.area < min || plot.area > max) {
-                        show = false;
-                    }
-                }
-
-                // 3. Filter by ready possession
-                if (currentSelections.readyPossession && show) {
-                    const hasRL = plot.rl && String(plot.rl).trim() !== '';
-                    if (currentSelections.readyPossession === 'ready' && !hasRL) {
-                        show = false;
-                    }
-                    if (currentSelections.readyPossession === 'under' && hasRL) {
-                        show = false;
-                    }
-                }
-
-                // 4. Filter by plot specifications
-                if (currentSelections.plotSpecs && show) {
-                    const isCorner = (plot.corner === true || plot.corner === 1 || plot.corner === '1' || plot.corner === 'true');
-                    const isGarden = (plot.garden === true || plot.garden === 1 || plot.garden === '1' || plot.garden === 'true');
-
-                    switch (currentSelections.plotSpecs) {
-                        case 'standard':
-                            if (isCorner || isGarden) {
-                                show = false;
-                            }
-                            break;
-                        case 'corner':
-                            if (!isCorner || isGarden) {
-                                show = false;
-                            }
-                            break;
-                        case 'garden':
-                            if (!isGarden || isCorner) {
-                                show = false;
-                            }
-                            break;
-                        case 'both':
-                            if (!isCorner || !isGarden) {
-                                show = false;
-                            }
-                            break;
-                    }
-                }
-
-                // 5. Filter by road width
-                if (currentSelections.roadWidth && show) {
-                    const expectedRoad = roadWidthMap[currentSelections.roadWidth];
-                    if (plot.road !== expectedRoad) {
-                        show = false;
-                    }
-                }
-
-                // 6. Filter by price range
-                if (currentSelections.priceRange && show) {
+                // Apply price filter only
+                if (priceRange && show) {
                     const plotPrice = calculateTotalPlotPrice(plot);
-                    if (!isPriceInRange(plotPrice, currentSelections.priceRange)) {
+                    if (!isPriceInRange(plotPrice, priceRange)) {
                         show = false;
                     }
                 }
 
-                // Update marker visibility
                 if (show) {
                     markerData.element.classList.remove('filtered-out');
                     markerData.element.style.pointerEvents = 'auto';
                     visiblePlotCount++;
-                    if (plot.status === 'available') {
-                        availablePlotCount++;
-                    }
                 } else {
                     markerData.element.classList.add('filtered-out');
                     markerData.element.style.pointerEvents = 'none';
                 }
             });
 
-            // Show toast if filters applied but no plots match
-            if (hasActiveFilters && visiblePlotCount === 0) {
-                showToast('No plots available for selected filters. Please adjust your selection.', 'error');
-            } else if (visiblePlotCount > 0 && hasActiveFilters) {
-                showToast(`Found ${visiblePlotCount} plots matching your filters`, 'success');
+            if (hasActiveFilter && visiblePlotCount === 0) {
+                showToast('No plots available for selected price range. Please adjust your selection.', 'error');
             }
         }
 
-        // ==================== RESET ALL FILTERS ====================
-        function resetAllFilters() {
-            // Reset plot type radio
-            const plotTypeRadios = document.getElementsByName('side-plotType');
-            for (let radio of plotTypeRadios) {
-                if (radio.value === '') {
-                    radio.checked = true;
-                    break;
-                }
-            }
-
-            // Reset other selects
-            document.getElementById('side-sqft-range').value = '';
-            document.getElementById('side-ready-possession').value = '';
-
-            // Reset plot specs radio
-            const plotSpecsRadios = document.getElementsByName('plot-specs');
-            for (let radio of plotSpecsRadios) {
-                if (radio.value === '') {
-                    radio.checked = true;
-                    break;
-                }
-            }
-
-            document.getElementById('side-road-width').value = '';
-            document.getElementById('price-range').value = '';
-
-            // Update current selections
-            updateCurrentSelections();
-
-            // Show all markers
-            markers.forEach(markerData => {
-                markerData.element.classList.remove('filtered-out');
-                markerData.element.style.pointerEvents = 'auto';
-            });
-
-            showToast('All filters cleared', 'success');
-        }
-
-        // ==================== SIDE PANEL FUNCTIONS ====================
-        function openSidePanel() {
-            sidePanel.classList.add('active');
-            sidePanelOverlay.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeSidePanel() {
-            sidePanel.classList.remove('active');
-            sidePanelOverlay.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-
-        // ==================== FETCH PLOTS DATA ====================
+        // Fetch plots data from backend
         async function fetchPlotsData() {
             try {
                 showLoading(true);
@@ -1434,14 +1137,21 @@
                 }
                 const pointsData = await pointsResponse.json();
 
-                // Combine plots with their points
+                // Combine plots with their points - USE EXACT BACKEND VALUES, NO NORMALIZATION
                 allPlots = plotsData.map(plot => {
+                    // Find points for this plot
                     const plotPoints = pointsData.filter(point => point.plot_id === plot.id);
+
+                    // Sort points by sort_order
                     plotPoints.sort((a, b) => a.sort_order - b.sort_order);
 
+                    // Create points string for SVG polygon
                     const pointsString = plotPoints.map(point => `${point.x} ${point.y}`).join(' ');
+
+                    // Normalize status ONLY for CSS classes, keep original for display
                     const normalizedStatus = (plot.status || 'available').toLowerCase().replace(/\s+/g, '-');
 
+                    // KEEP EXACT BACKEND VALUES - no rounding, no normalization of numbers
                     return {
                         id: plot.id,
                         plot_id: plot.plot_id,
@@ -1450,27 +1160,30 @@
                             x: parseFloat(point.x),
                             y: parseFloat(point.y)
                         })),
-                        area: parseFloat(plot.area),
-                        fsi: parseFloat(plot.fsi),
-                        permissible_area: parseFloat(plot.permissible_area),
+                        area: parseFloat(plot.area),                    // EXACT area from backend (e.g., 5035.45)
+                        fsi: parseFloat(plot.fsi),                      // EXACT FSI
+                        permissible_area: parseFloat(plot.permissible_area), // EXACT permissible area
                         rl: plot.rl || '',
-                        status_original: plot.status,
-                        status: normalizedStatus,
-                        road: plot.road ? String(plot.road).trim() : '',
+                        status_original: plot.status,                   // Keep original status for display
+                        status: normalizedStatus,                       // Normalized for CSS classes
+                        road: plot.road ? String(plot.road).trim() : '', // EXACT road value with spaces preserved
                         plot_type: plot.plot_type || '',
                         category: plot.category || '',
-                        corner: plot.corner,
-                        garden: plot.garden,
+                        corner: plot.corner,                            // EXACT corner value (true/false/1/0)
+                        garden: plot.garden,                            // EXACT garden value (true/false/1/0)
                         notes: plot.notes || '',
                         created_at: plot.created_at,
                         updated_at: plot.updated_at
                     };
                 });
 
+                // Calculate bounds for each plot
                 calculatePlotBounds();
+
+                // Create markers
                 createMarkers();
 
-                console.log(`Loaded ${allPlots.length} plots`);
+                console.log(`Loaded ${allPlots.length} plots with exact backend values`);
             } catch (error) {
                 console.error('Error fetching plots data:', error);
                 showToast('Failed to load plot data. Please refresh the page.', 'error');
@@ -1479,6 +1192,7 @@
             }
         }
 
+        // Calculate bounds for each plot
         function calculatePlotBounds() {
             allPlots.forEach(plot => {
                 const points = plot.parsedPoints;
@@ -1508,8 +1222,11 @@
             // Clear existing markers
             document.querySelectorAll('.plot-marker').forEach(el => el.remove());
 
+            // Get actual displayed image dimensions
             const displayedWidth = plotImage.offsetWidth;
             const displayedHeight = plotImage.offsetHeight;
+
+            // Calculate scale factors
             const scaleX = displayedWidth / imageNaturalWidth;
             const scaleY = displayedHeight / imageNaturalHeight;
 
@@ -1519,6 +1236,7 @@
                 const marker = document.createElement('div');
                 const plotNumber = plot.plot_id || plot.id.match(/\d+/)?.[0] || '';
 
+                // Scale bounds to displayed image size
                 const scaledBounds = {
                     minX: plot.bounds.minX * scaleX,
                     minY: plot.bounds.minY * scaleY,
@@ -1528,6 +1246,7 @@
                     height: plot.bounds.height * scaleY
                 };
 
+                // Get color for status
                 const statusColor = statusColors[plot.status] || statusColors['available'];
 
                 marker.className = `plot-marker ${plot.status}`;
@@ -1537,6 +1256,7 @@
                 marker.style.width = `${scaledBounds.width}px`;
                 marker.style.height = `${scaledBounds.height}px`;
 
+                // Create SVG for polygon
                 const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                 svg.setAttribute('width', '100%');
                 svg.setAttribute('height', '100%');
@@ -1546,6 +1266,8 @@
                 svg.style.left = '0';
 
                 const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+
+                // Convert points to local coordinates within the marker
                 const localPoints = plot.parsedPoints.map(point => {
                     const x = (point.x - plot.bounds.minX) * scaleX;
                     const y = (point.y - plot.bounds.minY) * scaleY;
@@ -1554,10 +1276,13 @@
 
                 polygon.setAttribute('points', localPoints);
                 polygon.setAttribute('fill', statusColor.background);
+                // polygon.setAttribute('stroke', statusColor.border);
+                // polygon.setAttribute('stroke-width', '2');
                 polygon.classList.add('plot-polygon');
 
-                svg.appendChild(polygon);
+                svg.appendChild(polygon);//
 
+                // Create plot number display
                 const numberDisplay = document.createElement('div');
                 numberDisplay.className = 'plot-number';
                 numberDisplay.textContent = plotNumber;
@@ -1565,12 +1290,18 @@
                 marker.appendChild(svg);
                 marker.appendChild(numberDisplay);
 
+                // Set data attributes
                 marker.dataset.plotId = plot.id;
                 marker.dataset.plotNumber = plotNumber;
                 marker.dataset.area = plot.area;
                 marker.dataset.road = plot.road;
                 marker.dataset.status = plot.status;
 
+                // Calculate total price for tooltip
+                const plotPrice = calculateTotalPlotPrice(plot);
+                const priceInLakhs = (plotPrice / 100000).toFixed(2);
+
+                // Add event listeners for mobile touch
                 if (isMobile) {
                     marker.addEventListener('touchstart', handleMarkerTouchStart, { passive: true });
                     marker.addEventListener('touchend', handleMarkerTouchEnd, { passive: true });
@@ -1582,18 +1313,17 @@
                     });
                 }
 
+                // Set tooltip with EXACT backend values
+                let viewType = '';
                 const isCorner = (plot.corner === true || plot.corner === 1 || plot.corner === '1' || plot.corner === 'true');
                 const isGarden = (plot.garden === true || plot.garden === 1 || plot.garden === '1' || plot.garden === 'true');
 
-                let viewType = '';
                 if (isCorner && isGarden) viewType = 'Dual Access & Premium';
                 else if (isGarden) viewType = 'Premium Plot';
                 else if (isCorner) viewType = 'Dual Access';
                 else viewType = 'Standard Plot';
 
                 const statusText = plot.status_original || plot.status;
-                const plotPrice = calculateTotalPlotPrice(plot);
-                const priceInLakhs = (plotPrice / 100000).toFixed(2);
 
                 marker.title = `${plot.plot_id || plot.id} - ₹${formatIndianNumberSimple(plotPrice)} (${priceInLakhs} Lakhs) | ${viewType} | Road: ${plot.road} | Status: ${statusText} | Area: ${formatIndianNumberSimple(plot.area)} sq.ft`;
 
@@ -1605,7 +1335,7 @@
             });
         }
 
-        // ==================== MOBILE TOUCH HANDLERS ====================
+        // Mobile touch handlers for plot markers
         let activeMarkerTouch = null;
         let touchMoved = false;
 
@@ -1661,29 +1391,64 @@
             touchMoved = false;
         }
 
-        // ==================== POPUP FUNCTIONS ====================
+        // SIDE PANEL FUNCTIONS
+        function openSidePanel() {
+            sidePanel.classList.add('active');
+            sidePanelOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSidePanel() {
+            sidePanel.classList.remove('active');
+            sidePanelOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function applySideSelections() {
+            applyFilters();
+            closeSidePanel();
+        }
+
+        function resetSideSelections() {
+            document.getElementById('price-range').value = '';
+            applyFilters();
+        }
+
+        // FIXED: Popup always opens at the top
         function showpopupplot(plot) {
+            // Reset popup scroll position to top BEFORE showing it
             const popup = document.getElementById('popupplot');
+            const overlay = document.getElementById('overlay');
+
+            // Reset scroll position
             popup.scrollTop = 0;
             popup.scrollTo({ top: 0, behavior: 'instant' });
 
+            // Make visible and set current plot
             popup.style.display = 'block';
             currentPlot = plot;
 
+            // Activate popup and overlay
             overlay.classList.add('active');
             popup.classList.add('active');
+
+            // Prevent body scroll
             document.body.style.overflow = 'hidden';
 
+            // Set title with proper fallback
             const displayId = plot.plot_id || plot.id;
             document.getElementById('popupplotTitle').textContent = displayId;
 
+            // Set status badge with original status
             const statusText = plot.status_original || plot.status;
             const badge = document.getElementById('statusBadge');
             badge.textContent = statusText;
             badge.className = `status-badge ${plot.status}`;
 
+            // RL field determines possession
             const readyPossession = plot.rl && String(plot.rl).trim() ? 'Ready to Register' : 'Under Development';
 
+            // Determine corner/garden/dual rates - EXACT from backend values
             const isCorner = (plot.corner === true || plot.corner === 1 || plot.corner === '1' || plot.corner === 'true');
             const isGarden = (plot.garden === true || plot.garden === 1 || plot.garden === '1' || plot.garden === 'true');
 
@@ -1692,7 +1457,7 @@
 
             if (isCorner && isGarden) {
                 cornerGardenRate = 200;
-                cornerGardenText = 'Dual Access & Premium';
+                cornerGardenText = 'Dual Access';
             } else if (isCorner) {
                 cornerGardenRate = 100;
                 cornerGardenText = 'Dual Access';
@@ -1701,6 +1466,7 @@
                 cornerGardenText = 'Premium Plot';
             }
 
+            // Road rate - EXACT from backend road string
             let roadRate = 0;
             let roadText = '9MTR';
             if (plot.road) {
@@ -1739,51 +1505,51 @@
                 const totalPriceWithAllPrice = totalPrice + legalCharge + registrationFee + stampDuty + maintenanceAmount + membershipPrice;
 
                 let priceHTML = `
-                    <h4>💰 Price Breakdown</h4>
-                    <div class="price-item">
-                        <span>Base Price (₹${formatIndianNumberSimple(baseRate)} × ${formatIndianNumberSimple(area)})</span>
-                        <span class="price">₹${formatIndianNumberSimple(basePrice)}</span>
-                    </div>
-                    <div class="price-item">
-                        <span>${cornerGardenText} (₹${formatIndianNumberSimple(cornerGardenRate)} × ${formatIndianNumberSimple(area)})</span>
-                        <span class="price">${cornerGardenPrice ? '+₹' + formatIndianNumberSimple(cornerGardenPrice) : '₹0'}</span>
-                    </div>
-                    <div class="price-item">
-                        <span>${roadText} (₹${formatIndianNumberSimple(roadRate)} × ${formatIndianNumberSimple(area)})</span>
-                        <span class="price">${roadPrice ? '+₹' + formatIndianNumberSimple(roadPrice) : '₹0'}</span>
-                    </div>
-                    <div class="price-item total">
-                        <span>Total Land Price</span>
-                        <span class="price">₹${formatIndianNumberSimple(totalPrice)}</span>
-                    </div>
-                    <div class="price-item">
-                        <span>Stamp Duty (6%)</span>
-                        <span class="price">₹${formatIndianNumberSimple(stampDuty)}</span>
-                    </div>
-                    <div class="price-item">
-                        <span>Registration Fee (1% up to ₹30,000)</span>
-                        <span class="price">₹${formatIndianNumberSimple(registrationFee)}</span>
-                    </div>
-                    <div class="price-item">
-                        <span>Legal Charge</span>
-                        <span class="price">₹${formatIndianNumberSimple(legalCharge)}</span>
-                    </div>
-                    <div class="price-item">
-                        <span>Maintenance (₹10/sq.ft × 3 Years)</span>
-                        <span class="price">₹${formatIndianNumberSimple(maintenanceAmount)}</span>
-                    </div>
-                    <div class="price-item">
-                        <label>
-                            <input type="checkbox" id="clubMembershipChk" ${membershipCheckedState ? 'checked' : ''}>
-                            Club Membership
-                        </label>
-                        <span class="price">${membershipPrice ? '+₹' + formatIndianNumberSimple(membershipPrice) : '₹0'}</span>
-                    </div>
-                    <div class="price-item total">
-                        <span>Total Price (Including all charges)</span>
-                        <span class="price">₹${formatIndianNumberSimple(totalPriceWithAllPrice)}</span>
-                    </div>
-                `;
+            <h4>💰 Price Breakdown</h4>
+            <div class="price-item">
+                <span>Base Price (₹${formatIndianNumberSimple(baseRate)} × ${formatIndianNumberSimple(area)})</span>
+                <span class="price">₹${formatIndianNumberSimple(basePrice)}</span>
+            </div>
+            <div class="price-item">
+                <span>${cornerGardenText} (₹${formatIndianNumberSimple(cornerGardenRate)} × ${formatIndianNumberSimple(area)})</span>
+                <span class="price">${cornerGardenPrice ? '+₹' + formatIndianNumberSimple(cornerGardenPrice) : '₹0'}</span>
+            </div>
+            <div class="price-item">
+                <span>${roadText} (₹${formatIndianNumberSimple(roadRate)} × ${formatIndianNumberSimple(area)})</span>
+                <span class="price">${roadPrice ? '+₹' + formatIndianNumberSimple(roadPrice) : '₹0'}</span>
+            </div>
+            <div class="price-item total">
+                <span>Total Land Price</span>
+                <span class="price">₹${formatIndianNumberSimple(totalPrice)}</span>
+            </div>
+            <div class="price-item">
+                <span>Stamp Duty (6%)</span>
+                <span class="price">₹${formatIndianNumberSimple(stampDuty)}</span>
+            </div>
+            <div class="price-item">
+                <span>Registration Fee (1% up to ₹30,000)</span>
+                <span class="price">₹${formatIndianNumberSimple(registrationFee)}</span>
+            </div>
+            <div class="price-item">
+                <span>Legal Charge</span>
+                <span class="price">₹${formatIndianNumberSimple(legalCharge)}</span>
+            </div>
+            <div class="price-item">
+                <span>Maintenance (₹10/sq.ft × 3 Years)</span>
+                <span class="price">₹${formatIndianNumberSimple(maintenanceAmount)}</span>
+            </div>
+            <div class="price-item">
+                <label>
+                    <input type="checkbox" id="clubMembershipChk" ${membershipCheckedState ? 'checked' : ''}>
+                    Club Membership
+                </label>
+                <span class="price">${membershipPrice ? '+₹' + formatIndianNumberSimple(membershipPrice) : '₹0'}</span>
+            </div>
+            <div class="price-item total">
+                <span>Total Price (Including all charges)</span>
+                <span class="price">₹${formatIndianNumberSimple(totalPriceWithAllPrice)}</span>
+            </div>
+        `;
 
                 const bookingAmount = 51000;
                 const totalAllWithMinusMaintenanceAmount = totalPriceWithAllPrice - maintenanceAmount;
@@ -1796,46 +1562,49 @@
                     const totalUnderDevelopment = totalAllWithMinusMaintenanceAmount + maintenanceAmount;
 
                     paymentHTML = `
-                        <div class="table-scroll">
-                            <h4 style="margin-top:20px;">📅 Payment Schedule (Under Development)</h4>
-                            <table id="exceltable" border="1" cellpadding="5" cellspacing="0" style="width:100%">
-                                <tr><th>S.NO</th><th>STAGES</th><th>PAYMENT</th><th>AMOUNT</th></tr>
-                                <tr><td>1</td><td>Booking Amount</td><td>Token</td><td>₹${formatIndianNumberSimple(bookingAmount)}</td></tr>
-                                <tr><td>2</td><td>Registered Agreement</td><td>20%</td><td>₹${formatIndianNumberSimple(agreement20)}</td></tr>
-                                <tr><td>3</td><td>Installment 1</td><td>15%</td><td>₹${formatIndianNumberSimple(installment15)}</td></tr>
-                                <tr><td>4</td><td>Installment 2</td><td>15%</td><td>₹${formatIndianNumberSimple(installment15)}</td></tr>
-                                <tr><td>5</td><td>Installment 3</td><td>15%</td><td>₹${formatIndianNumberSimple(installment15)}</td></tr>
-                                <tr><td>6</td><td>Installment 4</td><td>15%</td><td>₹${formatIndianNumberSimple(installment15)}</td></tr>
-                                <tr><td>7</td><td>Installment 5</td><td>Remaining</td><td>₹${formatIndianNumberSimple(remainingAmount)}</td></tr>
-                                <tr><td>8</td><td>Maintenance</td><td>₹10 / sq.ft (3 Years)</td><td>₹${formatIndianNumberSimple(maintenanceAmount)}</td></tr>
-                                <tr><td>9</td><td><b>Total</b></td><td></td><td><b>₹${formatIndianNumberSimple(totalUnderDevelopment)}</b></td></tr>
-                            </table>
-                        </div>
-                    `;
+                <div class="table-scroll">
+                    <h4 style="margin-top:20px;">📅 Payment Schedule (Under Development)</h4>
+                    <table id="exceltable" border="1" cellpadding="5" cellspacing="0" style="width:100%">
+                        <tr><th>S.NO</th><th>STAGES</th><th>PAYMENT</th><th>AMOUNT</th></tr>
+                        <tr><td>1</td><td>Booking Amount</td><td>Token</td><td>₹${formatIndianNumberSimple(bookingAmount)}</td></tr>
+                        <tr><td>2</td><td>Registered Agreement</td><td>20%</td><td>₹${formatIndianNumberSimple(agreement20)}</td></tr>
+                        <tr><td>3</td><td>Installment 1</td><td>15%</td><td>₹${formatIndianNumberSimple(installment15)}</td></tr>
+                        <tr><td>4</td><td>Installment 2</td><td>15%</td><td>₹${formatIndianNumberSimple(installment15)}</td></tr>
+                        <tr><td>5</td><td>Installment 3</td><td>15%</td><td>₹${formatIndianNumberSimple(installment15)}</td></tr>
+                        <tr><td>6</td><td>Installment 4</td><td>15%</td><td>₹${formatIndianNumberSimple(installment15)}</td></tr>
+                        <tr><td>7</td><td>Installment 5</td><td>Remaining</td><td>₹${formatIndianNumberSimple(remainingAmount)}</td></tr>
+                        <tr><td>8</td><td>Maintenance</td><td>₹10 / sq.ft (3 Years)</td><td>₹${formatIndianNumberSimple(maintenanceAmount)}</td></tr>
+                        <tr><td>9</td><td><b>Total</b></td><td></td><td><b>₹${formatIndianNumberSimple(totalUnderDevelopment)}</b></td></tr>
+                    </table>
+                </div>
+            `;
                 } else {
                     const agreement20 = totalAllWithMinusMaintenanceAmount * 0.20;
                     const remainingAmount = totalAllWithMinusMaintenanceAmount - bookingAmount - agreement20;
                     const totalReadyRegister = totalAllWithMinusMaintenanceAmount + maintenanceAmount;
 
                     paymentHTML = `
-                        <div class="table-scroll">
-                            <h4 style="margin-top:20px;">📅 Payment Schedule (Ready to Register)</h4>
-                            <table id="exceltable" border="1" cellpadding="5" cellspacing="0" style="width:100%">
-                                <tr><th>S.NO</th><th>STAGES</th><th>PAYMENT</th><th>AMOUNT</th></tr>
-                                <tr><td>1</td><td>Booking Amount</td><td>Token</td><td>₹${formatIndianNumberSimple(bookingAmount)}</td></tr>
-                                <tr><td>2</td><td>Registered Agreement</td><td>20%</td><td>₹${formatIndianNumberSimple(agreement20)}</td></tr>
-                                <tr><td>3</td><td>Sale Deed</td><td>Remaining</td><td>₹${formatIndianNumberSimple(remainingAmount)}</td></tr>
-                                <tr><td>4</td><td>Maintenance</td><td>₹10 / sq.ft (3 Years)</td><td>₹${formatIndianNumberSimple(maintenanceAmount)}</td></tr>
-                                <tr><td>5</td><td><b>Total</b></td><td></td><td><b>₹${formatIndianNumberSimple(totalReadyRegister)}</b></td></tr>
-                            </table>
-                        </div>
-                    `;
+                <div class="table-scroll">
+                    <h4 style="margin-top:20px;">📅 Payment Schedule (Ready to Register)</h4>
+                    <table id="exceltable" border="1" cellpadding="5" cellspacing="0" style="width:100%">
+                        <tr><th>S.NO</th><th>STAGES</th><th>PAYMENT</th><th>AMOUNT</th></tr>
+                        <tr><td>1</td><td>Booking Amount</td><td>Token</td><td>₹${formatIndianNumberSimple(bookingAmount)}</td></tr>
+                        <tr><td>2</td><td>Registered Agreement</td><td>20%</td><td>₹${formatIndianNumberSimple(agreement20)}</td></tr>
+                        <tr><td>3</td><td>Sale Deed</td><td>Remaining</td><td>₹${formatIndianNumberSimple(remainingAmount)}</td></tr>
+                        <tr><td>4</td><td>Maintenance</td><td>₹10 / sq.ft (3 Years)</td><td>₹${formatIndianNumberSimple(maintenanceAmount)}</td></tr>
+                        <tr><td>5</td><td><b>Total</b></td><td></td><td><b>₹${formatIndianNumberSimple(totalReadyRegister)}</b></td></tr>
+                    </table>
+                </div>
+            `;
                 }
 
+                // Set the complete HTML
                 document.getElementById('priceBreakdown').innerHTML = priceHTML + paymentHTML;
 
+                // Attach event listener to checkbox
                 const chkbox = document.getElementById('clubMembershipChk');
                 if (chkbox) {
+                    // Remove existing listeners to prevent duplicates
                     chkbox.replaceWith(chkbox.cloneNode(true));
                     const newChkbox = document.getElementById('clubMembershipChk');
                     newChkbox.addEventListener('change', (e) => {
@@ -1845,21 +1614,23 @@
                 }
             }
 
+            // Populate plot information with EXACT backend values
             document.getElementById('popupplotInfo').innerHTML = `
-                <div class="info-row"><span class="info-label">📏 Area:</span><span class="info-value">${formatIndianNumberSimple(area)} sq ft</span></div>
-                <div class="info-row"><span class="info-label">🏢 Permissible Area:</span><span class="info-value">${formatIndianNumberSimple(plot.permissible_area)} sq ft</span></div>
-                <div class="info-row"><span class="info-label">✅ Possession:</span><span class="info-value">${readyPossession}</span></div>
-                <div class="info-row"><span class="info-label">⭐ Plot Specifications:</span><span class="info-value">${cornerGardenText}</span></div>
-                <div class="info-row"><span class="info-label">🛣️ Road Accessibility:</span><span class="info-value">${plot.road || 'N/A'}</span></div>
-                <div class="info-row"><span class="info-label">📊 Plot Type:</span><span class="info-value">${plot.plot_type}</span></div>
-            `;
+        <div class="info-row"><span class="info-label">📏 Area:</span><span class="info-value">${formatIndianNumberSimple(area)} sq ft</span></div>
+        <div class="info-row"><span class="info-label">🏢 Permissible Area:</span><span class="info-value">${formatIndianNumberSimple(plot.permissible_area)} sq ft</span></div>
+        <div class="info-row"><span class="info-label">✅ Possession:</span><span class="info-value">${readyPossession}</span></div>
+        <div class="info-row"><span class="info-label">⭐ Plot Specifications:</span><span class="info-value">${cornerGardenText}</span></div>
+        <div class="info-row"><span class="info-label">🛣️ Road Accessibility:</span><span class="info-value">${plot.road || 'N/A'}</span></div>
+        <div class="info-row"><span class="info-label">📊 Plot Type:</span><span class="info-value">${plot.plot_type}</span></div>
+    `;
 
+            // Initial price calculation
             updatePrice();
 
+            // Highlight the clicked marker
             markers.forEach(markerData => {
                 markerData.element.classList.remove('highlighted');
             });
-
             const clickedMarker = markers.find(m => m.plot.id === plot.id);
             if (clickedMarker) {
                 clickedMarker.element.classList.add('highlighted');
@@ -1867,7 +1638,10 @@
         }
 
         function closepopupplot() {
-            popup = document.getElementById('popupplot');
+            const popup = document.getElementById('popupplot');
+            const overlay = document.getElementById('overlay');
+
+            // Remove active classes
             popup.classList.remove('active');
             overlay.classList.remove('active');
 
@@ -1890,8 +1664,16 @@
                 popup.style.display = 'none';
             }, 500);
         }
+        // Loading spinner functions
+        function showLoading(show) {
+            if (show) {
+                loadingSpinner.style.display = 'block';
+            } else {
+                loadingSpinner.style.display = 'none';
+            }
+        }
 
-        // ==================== ZOOM FUNCTIONS ====================
+        // Zoom functions
         function updateTransform() {
             imageWrapper.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
             zoomInfo.textContent = `🔍 ${Math.round(scale * 100)}%`;
@@ -1914,12 +1696,21 @@
             updateTransform();
         }
 
-        // ==================== DRAG FUNCTIONS ====================
+        overlay.addEventListener('click', () => {
+            closepopupplot();
+        });
+
+        sidePanelOverlay.addEventListener('click', () => {
+            closeSidePanel();
+        });
+
+        // Zoom and drag functions
         plotImage.addEventListener('dragstart', (e) => {
             e.preventDefault();
             return false;
         });
 
+        // Desktop mouse events
         containerslide21.addEventListener('mousedown', (e) => {
             if (e.target.classList.contains('plot-marker') || e.target.closest('.plot-marker')) {
                 return;
@@ -1955,7 +1746,7 @@
             updateTransform();
         });
 
-        // Touch events
+        // Mobile touch events for container
         let touchDistance = 0;
         let isPinching = false;
         let initialTouches = [];
@@ -2027,20 +1818,18 @@
             updateTransform();
         });
 
-        containerslide21.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-        });
-
-        // ==================== IMAGE LOAD ====================
         plotImage.onload = function () {
             imageNaturalWidth = plotImage.naturalWidth;
             imageNaturalHeight = plotImage.naturalHeight;
+
+            // Fetch plots data after image loads
             fetchPlotsData();
 
             if (window.innerWidth < 768) {
                 scale = 1;
                 updateTransform();
             }
+
         };
 
         plotImage.onerror = function () {
@@ -2054,6 +1843,10 @@
                 </svg>
             `);
         };
+
+        containerslide21.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
 
         if (isIOS) {
             containerslide21.style.webkitTransform = 'translate3d(0,0,0)';
